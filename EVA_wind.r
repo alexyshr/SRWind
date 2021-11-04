@@ -15,7 +15,7 @@ remove.gap <- 180     #Removing time gaps in days (6 months)
 #Read ERA5 
 library(ncdf4)
 (ncname <- "outfile_nc4c_zip9")
-outputpathnetcdf = "../"
+outputpathnetcdf = "../../data_srwind/"
 
 (era5filename <- paste(outputpathnetcdf, ncname, ".nc", sep = ""))
 ncin <- nc_open(era5filename)
@@ -30,6 +30,9 @@ nlat = dim(lat)
 nlat
 ntime <-  dim(ncvar_get(ncin, "time"))
 variablename <- "fg10"
+variablenumber <- 1 #the position of the variable inside netcdf file 
+#(usefull for stars proxy which does not have the names in the object!)
+
 fg10.units <- ncatt_get(ncin, variablename, "units")
 fg10.units
 lonlat.unstack <- expand.grid(lon=as.numeric(lon), lat=as.numeric(lat))
@@ -51,12 +54,14 @@ timestamp_string <- as.character(timestamp)
 
 
 #estaciones <- read.delim("./alexys/01 estaciones.txt", header = FALSE, sep = "\t")
+selected_era5_stations = read.delim("./selected_era5_stations.txt", header = FALSE, sep = "\t")
 estaciones = data.frame(seq(1:length(lonlat.unstack$lon)))
 
 outputpath="./ERA5/"
 #outputpath="D:/jd/01 C?digos de programaci?n/02 Ajuste con R/alexys/"
 
-zzz=matrix(data=NA,length(estaciones[,1]),86)
+#zzz=matrix(data=NA,length(estaciones[,1]),86)
+zzz=matrix(data=NA,length(selected_era5_stations[,1]),86)
 
 
 colnames(zzz) <- c("id", "t_thresh", "t_mu_location", "t_psi_scale",
@@ -83,239 +88,245 @@ for (latindex in 1:nlat){
     #number <- estaciones[zz,1]
     number = zz
     
-    #Check its existence
-    fnfitted <- paste0(outputpath, "raw_data_station_", number, "_fitted", ".xlsx")
-    if (file.exists(fnfitted)) 
-      #Delete file if it exists
-      file.remove(fnfitted)
-    
-    statsfile = paste(outputpath, "raw_data_station_", number, "_statistics", ".xlsx", sep="")
-    if (file.exists(statsfile)) 
-      #Delete file if it exists
-      file.remove(statsfile)
-    
-    #number=800360
-    ## ##################################
-    
-    #raw.data <- ReadWindFile(station.number=number, path = outputpath)
-    raw.data <- ReadWindERA5Station(ncin = ncin, lonindex = lonindex,
-                                   latindex = latindex, ntime = ntime, timestamp = timestamp)
-    
-    
-    library(dplyr)
-    raw.data.tibble = as_tibble(raw.data)
-    
-    #Important THIS IS UNIQUE FOR ERA5,
-    #as ERA5 has hourly values the declustering will leave a point every year
-    #So to avoit it we will filter ONE value a week, then proceed
-    #Write raw.data to csv but only one data per day (the maximun)
-    library(xts)
-    #library(dplyr)
-    select <- dplyr::select
-    myxts = na.omit(xts(x=select(raw.data.tibble, "speed.kph"), order.by = raw.data.tibble$date.time))
-    endweeks = endpoints(myxts,on="weeks")
-    myxtsweeks = xts::period.apply(myxts, INDEX=endweeks, FUN=max)
-    #period = period.apply(myxts,INDEX=endp,FUN=max)
-    #indexFormat(period) <- "%Y-%m-%d"
-    #period2 = data.frame(date=format(index(period),"%Y-%m-%d"), speed.kph=period$speed.kph, stringsAsFactors =FALSE)
-    #myxtsweeks$thunder_flag = "nt"
-    thunder_flag = rep("nt", times=length(myxtsweeks))
-    mydataf = as.data.frame(myxtsweeks$speed.kph)
-    rownames(mydataf) = NULL
-    speed.kph = mydataf$speed.kph
-    raw.data = list(date.time=index(myxtsweeks), speed.kph=speed.kph)
-    raw.data$t.nt.flag = thunder_flag
-    rownames(raw.data) = NULL
-    raw.data.tibble = as_tibble(raw.data)
-    #period2 = as.xts(period2$speed.kph, order.by=as.Date(period2$date,"%Y-%m-%d"))
-    #colnames(period2) = c("speed.kph")
-    #write.zoo(period2,sep=";",file=paste0(number, ".csv"))
-    #write.table(period2,file=paste0(number, ".csv"),sep=";", row.names=FALSE)
-    #head(period)
-    #head(format(index(period),"%Y-%m-%d"))
-    #names(period) = "max"
-    
-    #Save all graphics to PDF
-    pdf(file= paste0(outputpath, paste("FittedModel",number,sep="_"),".pdf"),  paper="a4r", width = 0, height = 0)
-    numberofplots = 1
-    par(oma = c(2,0,0,0))
-    
-    #Raw Data (whole dataset) Statistics and Send to CSV 
-    source('./code/statistics_raw_data.r')
-    
-    
-    library(dplyr)
-    require(dplyr)
-    select <- dplyr::select
-    raw.data.tibble  %>%
-      select(date.time, speed.kph, t.nt.flag) %>%
-      filter(t.nt.flag == "nt") -> raw.data.nt
-    
-    #Non Thunderstorm - Create Raw Data Statistics and Send to CSV 
-    source('./code/statistics_raw_data_nt.r')
-    
-    
-    require(dplyr)
-    select <- dplyr::select
-    raw.data.tibble  %>%
-      select(date.time, speed.kph, t.nt.flag) %>%
-      filter(t.nt.flag == "t") -> raw.data.t
-    
-    #Thunderstorm - Create Raw Data Statistics and Send to CSV
-    source('./code/statistics_raw_data_t.r')
-    
-    
-    dt <- raw.data$date.time
-    
-    ws <- raw.data$speed.kph
-    ws[raw.data$t.nt.flag == "t"] <- ws[raw.data$t.nt.flag == "t"]*(-1)
-    
-    imp.vals <- PrepareData(ws=ws, dt=dt,
-                            t.thresh=0, nt.thresh=0,
-                            remove.gap=remove.gap,
-                            t.run=t.run, nt.run=nt.run,
-                            t.length=t.length)
-    total.time <- imp.vals$total.time
-    
-    t.nt.grid <- GenThresholds(ws=ws, dt=dt,
-                               total.time=total.time,
-                               t.run=t.run, nt.run=nt.run,
-                               t.length=t.length,
-                               min.n.per.year=min.n.per.year,
-                               max.n.per.year=max.n.per.year,
-                               remove.gap=remove.gap)
-    
-    n.thresholds <- dim(t.nt.grid)[1]
-    
-    ## calculate a summary statistics of model
-    ## appropriateness for each threshold pair
-    ## in the grid
-    stats <- NULL
-    for (j in 1:n.thresholds) {
-    
-      tmp.stat <- CompareStatGumbel(ws=ws, dt=dt,
-                                    t.thresh=t.nt.grid[j, 1],
-                                    nt.thresh=t.nt.grid[j, 2],
-                                    remove.gap=remove.gap,
-                                    t.run=t.run, nt.run=nt.run,
-                                    t.length=t.length)
-    
-      stats <- c(stats, tmp.stat)
-    }
-    
-    ## ################################################
-    ## the best threshold pair is the one with the
-    ## smallest summary statistic.
-    min.stats <- min(stats)
-    tmp <- stats == min.stats
-    if (sum(tmp) > 1) {
-    
-      tmp <- t.nt.grid[tmp, ]
-      value <- c(number, tmp[1, ], min.stats)
-    } else {
-    
-      value <- c(number, t.nt.grid[tmp, ], min.stats)
-    }
-    ## #################################################
-    
-    t.thresh <- value[2]
-    nt.thresh <- value[3]
-    
-    imp.vals <- PrepareData(ws=ws, dt=dt,
-                            t.thresh=t.thresh, nt.thresh=nt.thresh,
-                            remove.gap=remove.gap,
-                            t.run=t.run, nt.run=nt.run,
-                            t.length=t.length)
-    
-    my_str <- capture.output(str(imp.vals))
-    write.xlsx(my_str, file=statsfile, sheetName="IMP.VALS", append=TRUE, row.names=TRUE)
-    
-    #Write "t" to csv, but changing to one data per day (the maximun)
-    #Write "nt" to csv, but changing to one data per day (the maximun)
-    source('./code/write_t_nt_csv_one_data_per_day.r')
-    
-    
-    t.pp.fit <- FindStartVals(N=length(imp.vals$t.series),
-                              T=imp.vals$t.length.time,
-                              thresh=t.thresh,
-                              sum.y=sum(imp.vals$t.series))
-    
-    nt.pp.fit <- FindStartVals(N=length(imp.vals$nt.series),
-                               T=imp.vals$nt.length.time,
-                               thresh=nt.thresh,
-                               sum.y=sum(imp.vals$nt.series))
-    t.theta <- c(t.pp.fit$mu, t.pp.fit$psi, 0)
-    nt.theta <- c(nt.pp.fit$mu, nt.pp.fit$psi, 0)
-    
-    
-    #Statistics and graphics for declustered non-thunderstorm
-    source('./code/statistics_and_graphics_declustered_nt.r')
-    
-    #Statistics and graphics for declustered thunderstorm
-    source('./code/statistics_and_graphics_declustered_t.r')
-    
-    
-    #bmp(filename = paste(paste("Wplot",number,sep=" "),".bmp"), width = 480, height = 480)
-    z8=WPlot(t.series=imp.vals$t.series,
-          nt.series=imp.vals$nt.series,
-          t.thresh=t.thresh,
-          nt.thresh=nt.thresh,
-          t.theta=t.theta,
-          nt.theta=nt.theta,
-          t.n=length(imp.vals$t.series),
-          nt.n=length(imp.vals$nt.series),
-          tf.plot=FALSE,
-          BW=FALSE,
-          details=FALSE)
-    #dev.off()
-    z2=t.thresh
-    z3=t.theta[1]
-    z4=t.theta[2]
-    z5=nt.thresh
-    z6=nt.theta[1]
-    z7=nt.theta[2]
-    
-    zzz[zz,1]=zz      #consecutive
-    zzz[zz,2]=z2      #t_thresh
-    zzz[zz,3]=z3      #t_mu = location
-    zzz[zz,4]=z4      #t_psi = scale
-    zzz[zz,5]=z5      #nt_thresh
-    zzz[zz,6]=z6      #nt_mu = location
-    zzz[zz,7]=z7      #nt_psi = scale
-    zzz[zz,8]=z8      #max W for optimal thresholds
-    zzz[zz,9]=number  #station number
-    
-    tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000)
-    typicalExcedenceProbabilities = 1 /tipicalReturnPeriods
-    yvels = 1:600 #Velocities from 1 to 600
-    
-    
-    #Plot: Page 1: W-Statistics Plot for best threshold pair
-    WPlot(t.series=imp.vals$t.series,
-          nt.series=imp.vals$nt.series,
-          t.thresh=t.thresh,
-          nt.thresh=nt.thresh,
-          t.theta=t.theta,
-          nt.theta=nt.theta,
-          t.n=length(imp.vals$t.series),
-          nt.n=length(imp.vals$nt.series),
-          tf.plot=TRUE,
-          BW=FALSE,
-          details=FALSE)
-    mtext(side = 1, text = paste0("Page ", numberofplots), outer = TRUE)
-    numberofplots = numberofplots + 1
-    
-    #Plots for thunderstorm
-    source('./code/plot_t.r')
-    
-    #Plots for non-thunderstorm
-    source('./code/plot_nt.r')
-    
-    #Plots for non-thunderstorm and thunderstorm
-    source('./code/plot_t_nt.r')
-    
-    
-    dev.off()
+    if (any(selected_era5_stations[,1] == number))
+      print(number)
+      #Check its existence
+      fnfitted <- paste0(outputpath, "raw_data_station_", number, "_fitted", ".xlsx")
+      if (file.exists(fnfitted)) 
+        #Delete file if it exists
+        file.remove(fnfitted)
+      
+      statsfile = paste(outputpath, "raw_data_station_", number, "_statistics", ".xlsx", sep="")
+      if (file.exists(statsfile)) 
+        #Delete file if it exists
+        file.remove(statsfile)
+      
+      #number=800360
+      ## ##################################
+      
+      #raw.data <- ReadWindFile(station.number=number, path = outputpath)
+      raw.data <- ReadWindERA5Station(ncin = ncin, lonindex = lonindex,
+                                     latindex = latindex, ntime = ntime, timestamp = timestamp)
+      
+      #raw.data <- ReadWindERA5ProxyStation(starsOrStarsProxy = ncin, attribute = variablenumber, 
+      #                                     lonindex = lonindex, latindex = latindex, ntime = ntime)
+      
+      
+      library(dplyr)
+      raw.data.tibble = as_tibble(raw.data)
+      
+      #Important THIS IS UNIQUE FOR ERA5,
+      #as ERA5 has hourly values the declustering will leave a point every year
+      #So to avoit it we will filter ONE value a week, then proceed
+      #Write raw.data to csv but only one data per day (the maximun)
+      library(xts)
+      #library(dplyr)
+      select <- dplyr::select
+      myxts = na.omit(xts(x=select(raw.data.tibble, "speed.kph"), order.by = raw.data.tibble$date.time))
+      endweeks = endpoints(myxts,on="weeks")
+      myxtsweeks = xts::period.apply(myxts, INDEX=endweeks, FUN=max)
+      #period = period.apply(myxts,INDEX=endp,FUN=max)
+      #indexFormat(period) <- "%Y-%m-%d"
+      #period2 = data.frame(date=format(index(period),"%Y-%m-%d"), speed.kph=period$speed.kph, stringsAsFactors =FALSE)
+      #myxtsweeks$thunder_flag = "nt"
+      thunder_flag = rep("nt", times=length(myxtsweeks))
+      mydataf = as.data.frame(myxtsweeks$speed.kph)
+      rownames(mydataf) = NULL
+      speed.kph = mydataf$speed.kph
+      raw.data = list(date.time=index(myxtsweeks), speed.kph=speed.kph)
+      raw.data$t.nt.flag = thunder_flag
+      rownames(raw.data) = NULL
+      raw.data.tibble = as_tibble(raw.data)
+      #period2 = as.xts(period2$speed.kph, order.by=as.Date(period2$date,"%Y-%m-%d"))
+      #colnames(period2) = c("speed.kph")
+      #write.zoo(period2,sep=";",file=paste0(number, ".csv"))
+      #write.table(period2,file=paste0(number, ".csv"),sep=";", row.names=FALSE)
+      #head(period)
+      #head(format(index(period),"%Y-%m-%d"))
+      #names(period) = "max"
+      
+      #Save all graphics to PDF
+      pdf(file= paste0(outputpath, paste("FittedModel",number,sep="_"),".pdf"),  paper="a4r", width = 0, height = 0)
+      numberofplots = 1
+      par(oma = c(2,0,0,0))
+      
+      #Raw Data (whole dataset) Statistics and Send to CSV 
+      source('./code/stats_raw_data.r')
+      
+      
+      library(dplyr)
+      require(dplyr)
+      select <- dplyr::select
+      raw.data.tibble  %>%
+        select(date.time, speed.kph, t.nt.flag) %>%
+        filter(t.nt.flag == "nt") -> raw.data.nt
+      
+      #Non Thunderstorm - Create Raw Data Statistics and Send to CSV 
+      source('./code/stats_raw_data_nt.r')
+      
+      
+      require(dplyr)
+      select <- dplyr::select
+      raw.data.tibble  %>%
+        select(date.time, speed.kph, t.nt.flag) %>%
+        filter(t.nt.flag == "t") -> raw.data.t
+      
+      #Thunderstorm - Create Raw Data Statistics and Send to CSV
+      source('./code/stats_raw_data_t.r')
+      
+      
+      dt <- raw.data$date.time
+      
+      ws <- raw.data$speed.kph
+      ws[raw.data$t.nt.flag == "t"] <- ws[raw.data$t.nt.flag == "t"]*(-1)
+      
+      imp.vals <- PrepareData(ws=ws, dt=dt,
+                              t.thresh=0, nt.thresh=0,
+                              remove.gap=remove.gap,
+                              t.run=t.run, nt.run=nt.run,
+                              t.length=t.length)
+      total.time <- imp.vals$total.time
+      
+      t.nt.grid <- GenThresholds(ws=ws, dt=dt,
+                                 total.time=total.time,
+                                 t.run=t.run, nt.run=nt.run,
+                                 t.length=t.length,
+                                 min.n.per.year=min.n.per.year,
+                                 max.n.per.year=max.n.per.year,
+                                 remove.gap=remove.gap)
+      
+      n.thresholds <- dim(t.nt.grid)[1]
+      
+      ## calculate a summary statistics of model
+      ## appropriateness for each threshold pair
+      ## in the grid
+      stats <- NULL
+      for (j in 1:n.thresholds) {
+      
+        tmp.stat <- CompareStatGumbel(ws=ws, dt=dt,
+                                      t.thresh=t.nt.grid[j, 1],
+                                      nt.thresh=t.nt.grid[j, 2],
+                                      remove.gap=remove.gap,
+                                      t.run=t.run, nt.run=nt.run,
+                                      t.length=t.length)
+      
+        stats <- c(stats, tmp.stat)
+      }
+      
+      ## ################################################
+      ## the best threshold pair is the one with the
+      ## smallest summary statistic.
+      min.stats <- min(stats)
+      tmp <- stats == min.stats
+      if (sum(tmp) > 1) {
+      
+        tmp <- t.nt.grid[tmp, ]
+        value <- c(number, tmp[1, ], min.stats)
+      } else {
+      
+        value <- c(number, t.nt.grid[tmp, ], min.stats)
+      }
+      ## #################################################
+      
+      t.thresh <- value[2]
+      nt.thresh <- value[3]
+      
+      imp.vals <- PrepareData(ws=ws, dt=dt,
+                              t.thresh=t.thresh, nt.thresh=nt.thresh,
+                              remove.gap=remove.gap,
+                              t.run=t.run, nt.run=nt.run,
+                              t.length=t.length)
+      
+      my_str <- capture.output(str(imp.vals))
+      write.xlsx(my_str, file=statsfile, sheetName="IMP.VALS", append=TRUE, row.names=TRUE)
+      
+      #Write "t" to csv, but changing to one data per day (the maximun)
+      #Write "nt" to csv, but changing to one data per day (the maximun)
+      #source('./code/write_t_nt_csv_one_data_per_day.r')
+      source('./code/tnt_csv_1perday.r')
+      
+      
+      
+      t.pp.fit <- FindStartVals(N=length(imp.vals$t.series),
+                                T=imp.vals$t.length.time,
+                                thresh=t.thresh,
+                                sum.y=sum(imp.vals$t.series))
+      
+      nt.pp.fit <- FindStartVals(N=length(imp.vals$nt.series),
+                                 T=imp.vals$nt.length.time,
+                                 thresh=nt.thresh,
+                                 sum.y=sum(imp.vals$nt.series))
+      t.theta <- c(t.pp.fit$mu, t.pp.fit$psi, 0)
+      nt.theta <- c(nt.pp.fit$mu, nt.pp.fit$psi, 0)
+      
+      
+      #Statistics and graphics for declustered non-thunderstorm
+      #source('./code/statistics_and_graphics_declustered_nt.r')
+      source('./code/stats_graphs_dnt.r')
+      
+      #Statistics and graphics for declustered thunderstorm
+      #source('./code/statistics_and_graphics_declustered_t.r')
+      source('./code/stats_graphs_dt.r')
+      
+      #bmp(filename = paste(paste("Wplot",number,sep=" "),".bmp"), width = 480, height = 480)
+      z8=WPlot(t.series=imp.vals$t.series,
+            nt.series=imp.vals$nt.series,
+            t.thresh=t.thresh,
+            nt.thresh=nt.thresh,
+            t.theta=t.theta,
+            nt.theta=nt.theta,
+            t.n=length(imp.vals$t.series),
+            nt.n=length(imp.vals$nt.series),
+            tf.plot=FALSE,
+            BW=FALSE,
+            details=FALSE)
+      #dev.off()
+      z2=t.thresh
+      z3=t.theta[1]
+      z4=t.theta[2]
+      z5=nt.thresh
+      z6=nt.theta[1]
+      z7=nt.theta[2]
+      
+      zzz[zz,1]=zz      #consecutive
+      zzz[zz,2]=z2      #t_thresh
+      zzz[zz,3]=z3      #t_mu = location
+      zzz[zz,4]=z4      #t_psi = scale
+      zzz[zz,5]=z5      #nt_thresh
+      zzz[zz,6]=z6      #nt_mu = location
+      zzz[zz,7]=z7      #nt_psi = scale
+      zzz[zz,8]=z8      #max W for optimal thresholds
+      zzz[zz,9]=number  #station number
+      
+      tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000)
+      typicalExcedenceProbabilities = 1 /tipicalReturnPeriods
+      yvels = 1:600 #Velocities from 1 to 600
+      
+      
+      #Plot: Page 1: W-Statistics Plot for best threshold pair
+      WPlot(t.series=imp.vals$t.series,
+            nt.series=imp.vals$nt.series,
+            t.thresh=t.thresh,
+            nt.thresh=nt.thresh,
+            t.theta=t.theta,
+            nt.theta=nt.theta,
+            t.n=length(imp.vals$t.series),
+            nt.n=length(imp.vals$nt.series),
+            tf.plot=TRUE,
+            BW=FALSE,
+            details=FALSE)
+      mtext(side = 1, text = paste0("Page ", numberofplots), outer = TRUE)
+      numberofplots = numberofplots + 1
+      
+      #Plots for thunderstorm
+      source('./code/plot_t.r')
+      
+      #Plots for non-thunderstorm
+      source('./code/plot_nt.r')
+      
+      #Plots for non-thunderstorm and thunderstorm
+      source('./code/plot_t_nt.r')
+      dev.off()
   }
 }
 write.xlsx(zzz, file=fn, sheetName="pp_pintar", append=TRUE, row.names=FALSE, col.names=TRUE)

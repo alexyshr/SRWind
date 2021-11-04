@@ -1,0 +1,162 @@
+---
+title: "Graphics"
+author: "Alexys H Rodriguez"
+date: "11/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include_packages_3, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis and also two functions
+# used for labeling and referencing
+if(!require(dplyr))
+    install.packages("dplyr", repos = "http://cran.rstudio.com")
+if(!require(ggplot2))
+    install.packages("ggplot2", repos = "http://cran.rstudio.com")
+if(!require(sf))
+    install.packages("sf", repos = "http://cran.rstudio.com")
+if(!require(rnaturalearth))
+    install.packages("rnaturalearth", repos = "http://cran.rstudio.com")
+if(!require(rnaturalearthdata))
+    install.packages("rnaturalearthdata", repos = "http://cran.rstudio.com")
+if(!require(ggspatial))
+    install.packages("ggspatial", repos = "http://cran.rstudio.com")
+if(!require(RColorBrewer))
+    install.packages("RColorBrewer", repos = "http://cran.rstudio.com")
+if(!require(knitr))
+    install.packages("knitr", repos = "http://cran.rstudio.com")
+if(!require(kableExtra))
+    install.packages("kableExtra", repos = "http://cran.rstudio.com")
+if(!require(raster))
+    install.packages("raster", repos = "http://cran.rstudio.com")
+if(!require(RStoolbox))
+    install.packages("RStoolbox", repos = "http://cran.rstudio.com")
+if(!require(gridExtra))
+    install.packages("gridExtra", repos = "http://cran.rstudio.com")
+if(!require(ggrepel))
+    install.packages("ggrepel", repos = "http://cran.rstudio.com")
+if(!require(grid))
+    install.packages("grid", repos = "http://cran.rstudio.com")
+if(!require(cowplot))
+    install.packages("cowplot", repos = "http://cran.rstudio.com")
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggspatial)
+library(RColorBrewer)
+library(knitr)
+library(kableExtra)
+library(raster)
+library(RStoolbox)
+library(gridExtra)
+library(ggrepel)
+library(grid)
+library(cowplot)
+library(stars)
+```
+
+## Structural Reliability Wind Pressures on Low-Slope Roofs Using Non-Hurricane ERA5 Data. Case Study: Colombia
+
+see <http://rmarkdown.rstudio.com>.
+
+ the **Knit** 
+ 
+```{r data, message=FALSE, warning=FALSE, include=FALSE}
+file_col_sf_pol = "../../data_srwind/COLOMBIA.shp"
+col_4326_sf_pol = st_read(dsn=file_col_sf_pol)
+
+file_col_st = "../../data_srwind/col2.tif"
+img_stack_col=stack(file_col_st)
+img_stack_col.crop = crop(img_stack_col, extent(col_4326_sf_pol))
+img_stack_col.mask = mask(img_stack_col.crop, col_4326_sf_pol)
+
+file_era5_sf_pol = "../../data_srwind/era5grid_left_right_pol.shp"
+era5_4326_sf_pol = st_read(dsn=file_era5_sf_pol)
+```
+
+
+
+```{r poorcomparison, echo=FALSE, fig.cap="IDEAM VV_AUT_10. Non-Quality Data Comparison", message=FALSE, warning=FALSE}
+
+
+#
+#IDEAM VV_AUT_10 - Non Quality Data Comparison
+#
+myPalette <- colorRampPalette(rev(brewer.pal(11, "YlGn")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(0, 255))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+#turn off s2 processing
+sf::sf_use_s2(FALSE)
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+pts <- do.call(rbind, st_centroid(st_geometry(era5_4326_sf_pol)))
+x = pts[,1]
+y = pts[,2]
+
+era5_4326_sf_pol$x = x
+era5_4326_sf_pol$y = y
+
+era5_4326_sf_pol_filter_good = era5_4326_sf_pol %>% filter(DN %in% c(2261, 1971,2066,2020,2260,1875,2213,2637,1442,1583,1501,1582,1381,1493,1485,
+ 1397,1338,1055,511,1644,515,221,1038))
+
+era5_4326_sf_pol_filter_very_good = era5_4326_sf_pol %>% filter(DN %in% c(265,360,78,312,416))
+
+era5_4326_sf_pol_col1 = era5_4326_sf_pol %>% filter(DN %in% c(1, 50, 148, 246, 344, 442, 540, 638, 736, 834, 932, 1030, 1128, 1226, 1324, 1422, 
+ 1520, 1618, 1716, 1814, 1912, 2010, 2108, 2206, 2304, 2402, 2500, 2598, 2696, 2794, 2892, 2990, 3088, 3186, 3284, 3333))
+
+era5_4326_sf_pol_col49 = era5_4326_sf_pol %>% filter(DN %in% c(49, 147, 245, 343, 441, 539, 637, 735, 833, 931, 1029, 1127, 1225, 1323, 1421, 1519, 
+ 1617, 1715, 1813, 1911, 2009, 2107, 2205, 2303, 2401, 2499, 2597, 2695, 2793, 2891, 2989, 3087, 3185, 3283, 3381))
+
+ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite",  size=0.1, alpha=0.7) + 
+  ggRGB(img_stack_col.mask, r = 1, g = 2, b = 3, ggLayer = TRUE, alpha=0.8)+
+  #sc+
+  geom_sf(data = era5_4326_sf_pol, colour="grey", fill=NA, size=0.1) + 
+  geom_sf(data = era5_4326_sf_pol_filter_good, aes(fill = "Good: 23"), colour="black", size=0.1, alpha=1, show.legend = "polygon") +
+  geom_sf(data = era5_4326_sf_pol_filter_very_good, aes(fill = "Very Good: 5"), colour="black", size=0.1, alpha=1, show.legend = "polygon") +
+  scale_fill_manual(values = c("Good: 23" = "yellow", "Very Good: 5" = "orange"), name="Downscaling Support") + #, label=c("dd")) +  
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  geom_text_repel(data = era5_4326_sf_pol_col1, size=2, aes(x=x, y=y, label = DN), direction="y", segment.size=0.1, segment.color= "grey50", 
+   color="grey50", nudge_x=-1, hjust=1, box.padding=0.1) +
+  geom_text_repel(data = era5_4326_sf_pol_col49, size=2, aes(x=x, y=y, label = DN), direction="y", segment.size=0.1, segment.color= "grey50", 
+   color="grey50", nudge_x=+1, hjust=0, box.padding=0.1) +
+  coord_sf(xlim = c(-81.25, -64.75), ylim = c(-5, 13), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("ERA5 grid, cells IDs from 1 to 3381 (49 cols, 69 rows)\nISD-IDEAM-ERA5 'poor data' comparison") + 
+  theme(plot.title = element_text(size=8)) +
+  theme(axis.text.x= element_text(size=7)) + 
+  theme(axis.text.y= element_text(size=7)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -10))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10)))
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

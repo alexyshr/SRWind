@@ -1,0 +1,46 @@
+starsOrStarsProxy = mync
+attribute = variablenumber
+lonindex = loninde 
+latindex = latindex
+ntime = ntime
+
+
+mync
+$outfile_nc4c_zip9.nc
+[1] "[...]/outfile_nc4c_zip9.nc"
+
+dimension(s):
+     from     to                  offset   delta  refsys point values x/y
+x       1     49                 -79.125    0.25      NA    NA   NULL [x]
+y       1     69                  12.625   -0.25      NA    NA   NULL [y]
+time    1 356472 1979-01-01 07:00:00 UTC 1 hours POSIXct    NA   NULL
+
+attr(mync, "dimensions")$x$values = lon
+attr(mync, "dimensions")$y$values = lat
+
+
+
+  statera5 = starsOrStarsProxy[attribute, lonindex, latindex, 1:ntime]
+  statera5 = st_as_stars(statera5) #If stars proxy, then convert to stars (Fetching the data)
+  timestamp = attr(starsOrStarsProxy, "dimensions")$time$values
+  statera5 = adrop(statera5) #Erase X and Y dimmensions
+  statera5 = statera5[[attribute]] #It could be class units
+  statera5 = clean_units(statera5) #so, remove units, then class array
+  statera5 = data.frame(statera5) #convert to data.frame
+  
+  colnames(statera5) = "kph" #It is in m/s (from ERA5), but next is the transformation
+  statera5$kph  = statera5$kph * 3.6  #from mts/seg to km/hour
+  statera5$thunder_flag = "nt"
+  
+  #filename <- paste(path, "raw_data_station_", station.number, ".txt", sep="")
+  #raw.data <- read.table(file=filename,
+  #                       header=TRUE,
+  #                       colClasses=c("character", "numeric", "character"))
+  #date.time <- as.POSIXct(raw.data[, "date_time"], tz="GMT", usetz=TRUE)
+  date.time <- timestamp
+  speed.kph <- statera5$kph
+  t.nt.flag <- statera5$thunder_flag
+  
+  value <- list(date.time=date.time,
+                speed.kph=speed.kph,
+                t.nt.flag=t.nt.flag)
