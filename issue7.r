@@ -3,6 +3,7 @@ library(reprex)
 
 reprex({
   library(stars)
+  Sys.setenv(GDAL_MAX_BAND_COUNT=1000000)
   #get NETCDF file
   myurl = "http://geocorp.co/wind/usafl_fg10_2007-2019.zip"
   filename = "usafl_fg10_2007-2019.zip"
@@ -17,7 +18,7 @@ reprex({
   mync_proxy_selection
   mync_noproxy = st_as_stars(mync_proxy_selection)
   #mync_noproxy
-},  wd = "./issues/", session_info=TRUE)
+},  wd = "./issues2/", session_info=TRUE, style=TRUE)
 
 
 # clean up
