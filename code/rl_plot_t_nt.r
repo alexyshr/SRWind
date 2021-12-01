@@ -39,9 +39,9 @@ if (length(imp.vals$t.series.dt) > 0) {
     percentage_pnt_fortypicalreturnperiodsP <- approx(x=probabilitiesreturnlevel[1,], y=probabilitiesreturnlevel[3,], xout=typicalExcedenceProbabilities)$y
     
     #Write return values to matrix zzz
-    zzz[zz,104:114] = veocitiesfortypicalreturnperiodsP #Velocities for typical return periods Poisson
-    zzz[zz,115:125] = percentage_pt_fortypicalreturnperiodsP
-    zzz[zz,126:136] = percentage_pnt_fortypicalreturnperiodsP
+    zzz[i,104:114] = veocitiesfortypicalreturnperiodsP #Velocities for typical return periods Poisson
+    zzz[i,115:125] = percentage_pt_fortypicalreturnperiodsP
+    zzz[i,126:136] = percentage_pnt_fortypicalreturnperiodsP
     #Plot return level curve
     maxy = max(veocitiesfortypicalreturnperiodsP) + 0.15*max(veocitiesfortypicalreturnperiodsP)
     #Hazards Curves using Intensity Function of Poisson Process

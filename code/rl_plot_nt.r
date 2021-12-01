@@ -15,7 +15,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #         Scale: equation after equation 18 page 39 (NIST.SP.500-301.pdf)
   #         Location: Equal to threshold of POT-PP (gpdLocation)
   #___   CDF: NIST.SP.500-301.pdf. Equation 5, page 17
-  #___   Write return values: zzz[zz,60:70]
+  #___   Write return values: zzz[i,60:70]
   #___   Plot hazard curve!
   
   #Intensity Function Poisson Process. NIST.SP.500-301.pdf, page 29
@@ -292,7 +292,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
     write.table(mat4,file=paste0(outputpath,"hazardcurve_importantpoints_", number, ".csv"), sep=",", row.names=FALSE)
     
   #Write return values to array zzz
-    zzz[zz,60:70] = veocitiesfortypicalreturnperiodsP #Velocities for typical return periods Poisson
+    zzz[i,60:70] = veocitiesfortypicalreturnperiodsP #Velocities for typical return periods Poisson
   
   #Create and Plot Hazards Curve
   # 1) POT-PP Intensity function integral (x = 1/paP, y= yvels), (yvels are return levels from 1 to 600)
@@ -336,7 +336,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #___   Intensity Function: NIST.SP.500-301.pdf, page 32, equation 10 (shape parameter equal to zero)
   #___   Return Values: NIST.SP.500-301.pdf, equation before equation 4 (page 16)
   #___     Ans (Ant) is 1
-  #___   Write return values: zzz[zz,71:81]  
+  #___   Write return values: zzz[i,71:81]  
   #___   Plot hazard curve!
   #___
   
@@ -366,7 +366,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
     veocitiesfortypicalreturnperiodsG <- approx(x=paG, y=yvels, xout = typicalExcedenceProbabilities)$y  #Interpolate tipical excedence probabilities to get velocities using Gumbel
     #Replace NA with zero 
     veocitiesfortypicalreturnperiodsG[is.na(veocitiesfortypicalreturnperiodsG)] <- 0    
-    zzz[zz,71:81] = veocitiesfortypicalreturnperiodsG #Velocities for typical return periods Gumbel Tile Length Intensity Function
+    zzz[i,71:81] = veocitiesfortypicalreturnperiodsG #Velocities for typical return periods Gumbel Tile Length Intensity Function
   
   #Plot Hazard Curve
   # using Intensity Function of Gumbel like tail length
@@ -408,7 +408,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #___   Calculation of return levels using Quantile function of Gumbel 
   #        with Poisson Process parameters
   #        and probability equal to (1-(1/mri). Be aware that lambda is not included in probabilities,
-  #        and write the return values to zzz[zz,82:92]
+  #        and write the return values to zzz[i,82:92]
   #___   Plot of Hazard Curve
   #        using gumbel quantile function
   #        using POT-PP formula (Equation 18 page 39 NIST.SP.500-301.pdf)
@@ -561,7 +561,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #veocitiesfortypicalreturnperiodsQG = sapply(tipicalReturnPeriods, gumbelVelocitiesQuantileFunctionBerry, npy=npy, truncate=truncate)
   
     #Write the return values to the Excel file
-    zzz[zz,82:92] = veocitiesfortypicalreturnperiodsQG #Velocities for typical return periods using Gumbel quantile function
+    zzz[i,82:92] = veocitiesfortypicalreturnperiodsQG #Velocities for typical return periods using Gumbel quantile function
 
   #Plot of Hazard Curve
   #  - Using gumbel quantile function
@@ -602,5 +602,5 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #___
   #___d) Using POT-Poisson-GPD with package XXX (This part is missing, need to be done!)
   #___   Write the return values to the Excel file
-  #        zzz[zz,93:103]
+  #        zzz[i,93:103]
 }

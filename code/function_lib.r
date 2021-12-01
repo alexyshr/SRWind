@@ -370,13 +370,13 @@ ReadWindFile <- function (station.number, path) {
 #This name is BAD (instead of ISD is ERA5), this function is the old version using nedf4. 
 #The new version ReadWindERA5ProxyStation is using stars and proxy object
 #Read the matrix in m/s and transform to km/h
-ReadWindISDStation <- function (ncin, lonindex, latindex, ntime, timestamp) {
+ReadWindERA5Station <- function (ncin, lonindex, latindex, ntime, timestamp) {
   
   #statera5_xts = na.omit(xts(x= ncvar_get(ncin, 'fg10', start=c(lonindex, latindex,1), count=c(1,1,ntime)), order.by = timestamp))
   statera5 = data.frame(ncvar_get(ncin, 'fg10', start=c(lonindex, latindex,1), count=c(1,1,ntime)))
   
-  colnames(statera5) = "mps"
-  statera5$mps  = statera5$mps * 3.6  #from mts/seg to km/hour
+  colnames(statera5) = "kph"
+  statera5$kph  = statera5$kph * 3.6  #from mts/seg to km/hour
   statera5$thunder_flag = "nt"
     
   #filename <- paste(path, "raw_data_station_", station.number, ".txt", sep="")
@@ -385,7 +385,7 @@ ReadWindISDStation <- function (ncin, lonindex, latindex, ntime, timestamp) {
   #                       colClasses=c("character", "numeric", "character"))
   #date.time <- as.POSIXct(raw.data[, "date_time"], tz="GMT", usetz=TRUE)
   date.time <- timestamp
-  speed.kph <- statera5$mps
+  speed.kph <- statera5$kph
   t.nt.flag <- statera5$thunder_flag
   
   value <- list(date.time=date.time,
@@ -444,6 +444,12 @@ ReadWindERA5ProxyStation <- function (starsOrStarsProxy, attribute, lonindex, la
   return(value)
   
 }
+
+
+
+
+
+
 ## ####################################################
 ## AltDecluster is my version of the decluster
 ## function in the evir package.  I do not like

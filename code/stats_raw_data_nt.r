@@ -50,9 +50,9 @@ if (length(raw.data.nt$date.time) > 0) {
   tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000)
   myextrRemesyearlymaxima = alexys_extRemes_yearlymaxima(x=raw.data.nt, RPs=tipicalReturnPeriods,
                                                          variable.description=paste0("Non-thunderstorm raw data for Station ID:", number))
-  #write.xlsx(myextrRemesyearlymaxima$a, file=fnfitted, sheetName="nt_rawdata_RL_yearlymaxima", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_rawdata_RL_yearlymaxima")
-  writeData(fnfitted_OUT, sheet = "nt_rawdata_RL_yearlymaxima", x = myextrRemesyearlymaxima$a)
+  #write.xlsx(myextrRemesyearlymaxima$a, file=fnfitted, sheetName="nt_rawdata_RL_yearlymaxima_GEV", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_rawdata_RL_yearlymaxima_GEV")
+  writeData(fnfitted_OUT, sheet = "nt_rawdata_RL_yearlymaxima_GEV", x = myextrRemesyearlymaxima$a)
 
   numberofplots = myextrRemesyearlymaxima$b
 }

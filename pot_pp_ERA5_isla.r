@@ -19,6 +19,7 @@ t.length <- 1/24          #Length of time in days of a single thunderstorm
 min.n.per.year <- 4       #Minimun observations per year when looking for threshold
 max.n.per.year <- 15      #Maximun observation per year when looking for threshold
 remove.gap <- 180         #Removing time gaps in days (6 months)
+
 #inputpath="./raw_data/"   #Folder with time series text files
 #inputpath= "D:/Rthesis/data/standardized/selectedisd/"
 #Modify Alexys (NETCDF folder)
@@ -34,10 +35,41 @@ variablename <- "fg10"
 variablenumber <- 1 #the position of the variable inside netcdf file 
                     #(usefull for stars proxy which does not have the names in the object!)
 names(mync) = variablename
-#ncname <- "outfile_nc4c_zip9"
 
-#Read NETCDF file
-#ncfile = paste0(inputpath, ncname, ".nc", sep = "")
+#Read NETCDF file with ncdf4
+library(ncdf4)
+ncname <- "outfile_nc4c_zip9"
+ncfile = paste0(inputpath, ncname, ".nc", sep = "")
+ncin <- nc_open(ncfile)
+# lon <- ncvar_get(ncin, "longitude")
+# lon
+# nlon = dim(lon)
+# nlon
+# lat <- ncvar_get(ncin, "latitude")
+# lat
+# nlat = dim(lat)
+# nlat
+# ntime <-  dim(ncvar_get(ncin, "time"))
+# fg10.units <- ncatt_get(ncin, variablename, "units")
+# fg10.units
+# lonlat.unstack <- expand.grid(lon=as.numeric(lon), lat=as.numeric(lat))
+# # Get datetime object from netCdf file 
+# #
+# t.units <- ncatt_get(ncin, "time", "units")
+# t.units
+# time.array <-  ncvar_get(ncin, "time")
+# nt = dim(time.array)
+# nt
+# head(time.array, 1)
+# tail(time.array, 1)
+# tustr <- strsplit(t.units$value, " ")
+# anio_mes_dia = unlist(tustr)[3]
+# anio_mes_dia
+# library(lubridate)
+# timestamp = as_datetime(c(time.array*60*60),origin=anio_mes_dia)
+# timestamp_string <- as.character(timestamp)
+
+# Stars Approach!
 #lon <- read_ncdf(ncfile, var = c("longitude"))
 lon <- seq(from=attr(mync, "dimensions")$x$offset, 
            to=attr(mync, "dimensions")$x$offset + (attr(mync, "dimensions")$x$delta * (attr(mync, "dimensions")$x$to-1)),
@@ -86,7 +118,7 @@ stations = data.frame(1:(nlon*nlat))
 #Folder to store output files (PDF and XLSX)
 #outputpath = "./isd2020-3/"
 #outputpath = "./ideam2020/"
-outputpath="./ERA5/"
+outputpath="../../ERA5/"
 
 #zzz = matrix to store intensity function parameters and return values using different methods
 #Records: Each record stores the result for one station. The number of records depends on the number of stations in variable 'stations'
@@ -169,6 +201,7 @@ fn_OUT <- createWorkbook()#Create a blank Workbook!
 
 #Next loop will run the POT-PP for all the stations in variable 'stations'
 #in each loop cycle a station
+i=0
 zz=0
 #latindex = 8
 #lonindex = 3
@@ -178,13 +211,14 @@ for (latindex in 1:nlat){
 #for (latindex in 8:8){
 #for (lonindex in 1:nlon) {
 #for (lonindex in 3:3) {
-    #browser()    
-    zz = zz + 1
+    #browser()
+    zz = zz + 1  # R indexes stars in one (1)
     #Read the station ID from 'stations' variable
     #number <- stations[zz,1]
     number = zz
     
-    if (any(selected_era5_stations[,1] == number))
+    if (any(selected_era5_stations[,1] == number)){
+      i = i + 1
       print(number)
       #browser()
       #Check the existence of the POT-PP (+ others) output parameters Excel file for the current station
@@ -199,11 +233,11 @@ for (latindex in 1:nlat){
       #Function ReadWindFile reads the time series text file raw_data_station_ID.txt (date_time kph thunder_flag)
       # into variable raw.data
       #raw.data <- ReadWindFile(station.number=number, path = inputpath)
-      #raw.data <- ReadWindISDStation(ncin = ncin, lonindex = lonindex,
-      #                               latindex = latindex, ntime = ntime, timestamp = timestamp)
+      raw.data <- ReadWindERA5Station(ncin = ncin, lonindex = lonindex,
+                                     latindex = latindex, ntime = ntime, timestamp = timestamp)
       
-      raw.data <- ReadWindERA5ProxyStation(starsOrStarsProxy = mync, attribute = variablenumber, 
-                                           lonindex = lonindex, latindex = latindex, ntime = ntime)
+      #raw.data <- ReadWindERA5ProxyStation(starsOrStarsProxy = mync, attribute = variablenumber, 
+      #                                     lonindex = lonindex, latindex = latindex, ntime = ntime)
       
       #filter velocities
       #Alexys
@@ -464,25 +498,25 @@ for (latindex in 1:nlat){
       z6=nt.theta[1]  #Non-thunderstorm location (nt_mu)
       z7=nt.theta[2]  #Non-thunderstorm scale (nt_psi)
     
-      zzz[zz,1]=zz       #consecutive
-      zzz[zz,2]=z2       #t_thresh
-      zzz[zz,3]=z3       #t_mu = location
-      zzz[zz,4]=z4       #t_psi = scale
-      zzz[zz,5]=imp.vals$n.thunders.per.year               #t_average_events_per_year
+      zzz[i,1]=i       #consecutive
+      zzz[i,2]=z2       #t_thresh
+      zzz[i,3]=z3       #t_mu = location
+      zzz[i,4]=z4       #t_psi = scale
+      zzz[i,5]=imp.vals$n.thunders.per.year               #t_average_events_per_year
       #Alexys: change: this valune need to come from rl_plot_t.r or rl_plot_t_nt.r 
-      zzz[zz,6]=imp.vals$n.thunders.per.year*(1/24)*(1/365)        #t_average_time_per_year(At): zzz[zz,5] * 1 hour (result in days) (Ok) >>>Same At!
-      zzz[zz,7]=NA                                         #t_gamma_Pot-Poisson-GPD. The average number of events per year calculated using POT-Poisson-GPD. 
+      zzz[i,6]=imp.vals$n.thunders.per.year*(1/24)*(1/365)        #t_average_time_per_year(At): zzz[i,5] * 1 hour (result in days) (Ok) >>>Same At!
+      zzz[i,7]=NA                                         #t_gamma_Pot-Poisson-GPD. The average number of events per year calculated using POT-Poisson-GPD. 
                                                            #Main parameter of Poisson 1D (lambda or gamma). Need to be calculated (this part is pending)
-      zzz[zz,8]=z5       #nt_thresh
-      zzz[zz,9]=z6       #nt_mu = location
-      zzz[zz,10]=z7      #nt_psi = scale
+      zzz[i,8]=z5       #nt_thresh
+      zzz[i,9]=z6       #nt_mu = location
+      zzz[i,10]=z7      #nt_psi = scale
       #Alexys: change: this valune need to come from rl_plot_t.r or rl_plot_t_nt.r 
-      zzz[zz,11]=imp.vals$n.nthunders.per.year           #nt_average_events_per_year
-      zzz[zz,12]=1-(zzz[zz,6])                         #nt_average_time_per_year(Ant) = 365-At
-      zzz[zz,13]=NA       #nt_gamma_Pot-Poisson-GPD. The average number of events per year calculated using POT-Poisson-GPD. 
+      zzz[i,11]=imp.vals$n.nthunders.per.year           #nt_average_events_per_year
+      zzz[i,12]=1-(zzz[i,6])                         #nt_average_time_per_year(Ant) = 365-At
+      zzz[i,13]=NA       #nt_gamma_Pot-Poisson-GPD. The average number of events per year calculated using POT-Poisson-GPD. 
                           #Main parameter of Poisson 1D (lambda or gamma).Need to be calculated (this part is pending)
-      zzz[zz,14]=z8      #max W for optimal thresholds
-      zzz[zz,15]=number  #station number
+      zzz[i,14]=z8      #max W for optimal thresholds
+      zzz[i,15]=number  #station number
     
       #List with typical return periods
       tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000)
@@ -528,6 +562,7 @@ for (latindex in 1:nlat){
       saveWorkbook(statsfile_OUT, statsfile)
       saveWorkbook(fnfitted_OUT, fnfitted)
       dev.off()
+    }
   }
 }
 
@@ -590,5 +625,5 @@ saveWorkbook(fn_OUT, fn)
 
 
 #write.table(zzz, file="fitted_model_result.csv", sep=",", row.names=FALSE, col.names=TRUE)
-print(paste("Total number of samples: ", (length(raw.data$date.time))))
-print(paste0("Maximum velocity in dataset: ", (max(raw.data$speed.kph))))
+#print(paste("Total number of samples: ", (length(raw.data$date.time))))
+#print(paste0("Maximum velocity in dataset: ", (max(raw.data$speed.kph))))

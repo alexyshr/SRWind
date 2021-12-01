@@ -62,16 +62,20 @@ if (length(imp.vals$nt.series.dt) > 0) {
   require(evd)
   library
   cat(number)
-  fit.evd <- evd::fgev(x=imp.vals$nt.series, shape = 0.0)
+  #Note fit.evd (shape=0) = fit.new 
+  #fit.evd <- evd::fgev(x=imp.vals$nt.series, shape = 0.0)
+  fit.evd <- evd::fgev(x=imp.vals$nt.series)
   fit.new <- fGumbel(imp.vals$nt.series)
-  myfit = cbind("evd::fgev" = c(fit.evd$estimate, "deviance" = fit.evd$deviance),
-                "new" = c(fit.new$estimate, fit.new$deviance))
+  #myfit = cbind("evd::fgev" = c(fit.evd$estimate, "deviance" = fit.evd$deviance),
+  #              "fGumbel" = c(fit.new$estimate, fit.new$deviance))
+  myfit = cbind("params>" =c(names(fit.evd$estimate), "deviance"), "evd::fgev" = c(fit.evd$estimate, "deviance" = fit.evd$deviance),
+                "params>" = c(names(fit.new$estimate), "deviance"), "fGumbel" = c(fit.new$estimate, fit.new$deviance))
   locbyfgev = fit.evd$estimate[1]
   scalebyfgev = fit.evd$estimate[2]
 
-  #write.xlsx(myfit, file=fnfitted, sheetName="nt_evd-fgev_fGumbel", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_evd-fgev_fGumbel")
-  writeData(fnfitted_OUT, sheet = "nt_evd-fgev_fGumbel", x = myfit)
+  #write.xlsx(myfit, file=fnfitted, sheetName="nt_evd-fgev_fGumbel_Gumbel", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_evd-fgev_fGumbel_Gumbel")
+  writeData(fnfitted_OUT, sheet = "nt_evd-fgev_fGumbel_Gumbel", x = myfit)
 
   #
 
@@ -82,11 +86,12 @@ if (length(imp.vals$nt.series.dt) > 0) {
   library(bbmle)
   est <- bbmle::mle2(logLH, start = list(mu = mu, sigma = sigma), data = list(x = imp.vals$nt.series))
   intervals = confint(est, level = 0.95)
-  myfit = list(mu2.5 = intervals["mu",1], mu=est@coef[1], mu97.5 = intervals["mu",2],
-               sigma2.5 = intervals["sigma",1], sigma=est@coef[2], sigma97.5 = intervals["sigma",2])
-  #write.xlsx(myfit, file=fnfitted, sheetName="nt_bbmle-mle2", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_bbmle-mle2")
-  writeData(fnfitted_OUT, sheet = "nt_bbmle-mle2", x = myfit)
+  myfit = list("mu2.5" = intervals["mu",1], "mu(location)"=est@coef[1], "mu97.5" = intervals["mu",2],
+               "sigma2.5" = intervals["sigma",1], "sigma(scale)"=est@coef[2], "sigma97.5" = intervals["sigma",2])
+  myfit = rbind(names(myfit), myfit)
+  #write.xlsx(myfit, file=fnfitted, sheetName="nt_bbmle-mle2_Gumbel", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_bbmle-mle2_Gumbel")
+  writeData(fnfitted_OUT, sheet = "nt_bbmle-mle2_Gumbel", x = myfit)
 
   #Use the minus log-likelihood (function mllGumbel) and optim
   mllToBeOptimized <- function(par)
@@ -100,10 +105,11 @@ if (length(imp.vals$nt.series.dt) > 0) {
   hist (imp.vals$nt.series, probability = TRUE, col='cadetblue3',
         xlab="Declustered - Non-Thunderstorm Series", main="Data Histogram and Fitted Gumbel Probability Density Curve")
   curve(dgumbel(x, mle[1], mle[2]), col = "red", add = TRUE)
-  myfit = list(mu=mle[1], sigma=mle[2])
-  #write.xlsx(myfit, file=fnfitted, sheetName="nt_nll-optim", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_nll-optim")
-  writeData(fnfitted_OUT, sheet = "nt_nll-optim", x =myfit)
+  myfit = list("mu(location)"=mle[1], "sigma(scale)"=mle[2])
+  myfit = rbind(names(myfit), myfit)
+  #write.xlsx(myfit, file=fnfitted, sheetName="nt_nll-optim_Gumbel", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_nll-optim_Gumbel")
+  writeData(fnfitted_OUT, sheet = "nt_nll-optim_Gumbel", x = myfit)
 
   mtext(side = 1, text = paste0("Page ", numberofplots, " - Log-Likelihood(Gumbel) - Optim (nll-optim). Location: ",
                                 round(mle[1], digits=2), ". Scale: ", round(mle[2], digits=2)), outer = TRUE)
@@ -132,10 +138,11 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #assign(paste0("myprint", numberofplots), recordPlot())
   #saveRDS(eval(parse(text=paste0("myprint", numberofplots))), paste0(outputpath, "myprint", numberofplots, ".rds"))
   numberofplots = numberofplots + 1
-  myfit = list(mu=gumbel.fit$estimate["mu"], sigma=gumbel.fit$estimate["sigma"])
-  #write.xlsx(myfit, file=fnfitted, sheetName="nt_fitdistrplus-fitdist", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_fitdistrplus-fitdist")
-  writeData(fnfitted_OUT, sheet = "nt_fitdistrplus-fitdist", x = myfit)
+  myfit = list("mu(location)"=gumbel.fit$estimate["mu"], "sigma(scale)"=gumbel.fit$estimate["sigma"])
+  myfit = rbind(names(myfit), myfit)
+  #write.xlsx(myfit, file=fnfitted, sheetName="nt_fitdistrplus-fitdist_Gumbel", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_fitdistrplus-fitdist_Gumbel")
+  writeData(fnfitted_OUT, sheet = "nt_fitdistrplus-fitdist_Gumbel", x = myfit)
 
   #Use package extremeStat to fit all the modes includes POT-GPD from different packages
   #imp.vals$t.series
@@ -154,9 +161,9 @@ if (length(imp.vals$nt.series.dt) > 0) {
   npy=imp.vals$n.nthunders.per.year
   myextrRemes = alexys_extRemes(imp.vals$nt.series, threshold=nt.thresh,
                                 RPs=tipicalReturnPeriods, npy=npy)
-  #write.xlsx(myextrRemes, file=fnfitted, sheetName="nt_extRemes", append=TRUE, row.names=TRUE)
-  addWorksheet(fnfitted_OUT, "nt_extRemes")
-  writeData(fnfitted_OUT, sheet = "nt_extRemes", x = myextrRemes)
+  #write.xlsx(myextrRemes, file=fnfitted, sheetName="nt_extRemes_GP", append=TRUE, row.names=TRUE)
+  addWorksheet(fnfitted_OUT, "nt_extRemes_GP")
+  writeData(fnfitted_OUT, sheet = "nt_extRemes_GP", x = myextrRemes)
 
 
   #extRemes berry
@@ -180,7 +187,8 @@ if (length(imp.vals$nt.series.dt) > 0) {
 
   #write.xlsx(d$quant, file=fnfitted, sheetName="nt_distLquantile_quant", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_distLquantile_quant")
-  writeData(fnfitted_OUT, sheet = "nt_distLquantile_quant", x = d$quant)
+  myDF <- data.frame(pdf = row.names(d$quant), d$quant)
+  writeData(fnfitted_OUT, sheet = "nt_distLquantile_quant", x = myDF)
 
   #write.xlsx(capture.output(d$parameter), file=fnfitted, sheetName="nt_distLquantile_parameters", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_distLquantile_parameters")
@@ -194,7 +202,8 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #numberofplots = numberofplots + 1
   #write.xlsx(dlf$returnlev, file=fnfitted, sheetName="nt_distLextreme_returnlev", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_distLextreme_returnlev")
-  writeData(fnfitted_OUT, sheet = "nt_distLextreme_returnlev", x = dlf$returnlev)
+  myDF <- data.frame(pdf = row.names(dlf$returnlev), dlf$returnlev)
+  writeData(fnfitted_OUT, sheet = "nt_distLextreme_returnlev", x = myDF)
   
   #write.xlsx(capture.output(dlf$parameter), file=fnfitted, sheetName="nt_distLextreme_parameter", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_distLextreme_parameter")
