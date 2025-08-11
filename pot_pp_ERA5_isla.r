@@ -23,14 +23,19 @@ remove.gap <- 180         #Removing time gaps in days (6 months)
 #inputpath="./raw_data/"   #Folder with time series text files
 #inputpath= "D:/Rthesis/data/standardized/selectedisd/"
 #Modify Alexys (NETCDF folder)
-inputpath= "../../data_srwind/"
-ncfiles = list.files(path=inputpath, pattern = "\\.nc$")
-ncfiles = paste0(inputpath, ncfiles)
-#mync1 = read_ncdf("../data/sanandres/isla_fg10_1979-1992.nc")
-#mync2 = read_ncdf("../data/sanandres/isla_fg10_1993-2006.nc")
-#mync3 = read_ncdf("../data/sanandres/isla_fg10_2007-2019.nc")
+inputpath= "../../data_srwind/isla/"
+#ncfiles = list.files(path=inputpath, pattern = "\\.nc$")
+#ncfiles = paste0(inputpath, ncfiles)
+ncfile = "isla_fg10"
+ncfile = paste0(inputpath, ncfile, ".nc")
+#mync1 = read_ncdf("../../data_srwind/isla/isla_fg10_1979-1992.nc")
+#mync2 = read_ncdf("../../data_srwind/isla/isla_fg10_1993-2006.nc")
+#mync3 = read_ncdf("../../data_srwind/isla/isla_fg10_2007-2019.nc")
 
-mync = read_stars(ncfiles, along = "time")#, proxy=TRUE)#, sub = "fg10")
+#mync = read_stars(ncfiles, along = "time")#, proxy=TRUE)#, proxy=TRUE)#, sub = "fg10")
+#mync = read_stars(ncfile, along = "time")#, proxy=TRUE)#, sub = "fg10")
+mync = stars:::read_mdim(ncfile)
+
 variablename <- "fg10"
 variablenumber <- 1 #the position of the variable inside netcdf file 
                     #(usefull for stars proxy which does not have the names in the object!)
@@ -38,8 +43,8 @@ names(mync) = variablename
 
 #Read NETCDF file with ncdf4
 library(ncdf4)
-ncname <- "outfile_nc4c_zip9"
-ncfile = paste0(inputpath, ncname, ".nc", sep = "")
+#ncname <- "isla_fg10_1979-1992"
+#ncfile = paste0(inputpath, ncname, ".nc", sep = "")
 ncin <- nc_open(ncfile)
 # lon <- ncvar_get(ncin, "longitude")
 # lon
@@ -71,15 +76,16 @@ ncin <- nc_open(ncfile)
 
 # Stars Approach!
 #lon <- read_ncdf(ncfile, var = c("longitude"))
-lon <- seq(from=attr(mync, "dimensions")$x$offset, 
-           to=attr(mync, "dimensions")$x$offset + (attr(mync, "dimensions")$x$delta * (attr(mync, "dimensions")$x$to-1)),
-           by = attr(mync, "dimensions")$x$delta) #Note that in to is minus 1
+#
+lon <- seq(from=attr(mync, "dimensions")$longitude$offset, 
+           to=attr(mync, "dimensions")$longitude$offset + (attr(mync, "dimensions")$longitude$delta * (attr(mync, "dimensions")$longitude$to-1)),
+           by = attr(mync, "dimensions")$longitude$delta) #Note that in to is minus 1
 #nlon = dim(lon)
 nlon = dim(mync)[1]
 #lat <- read_ncdf(ncfile, var = c("latitude"))
-lat <- seq(from=attr(mync, "dimensions")$y$offset, 
-           to=attr(mync, "dimensions")$y$offset + (attr(mync, "dimensions")$y$delta * (attr(mync, "dimensions")$y$to-1)),
-           by = attr(mync, "dimensions")$y$delta) #Note that in to is minus 1
+lat <- seq(from=attr(mync, "dimensions")$latitude$offset, 
+           to=attr(mync, "dimensions")$latitude$offset + (attr(mync, "dimensions")$latitude$delta * (attr(mync, "dimensions")$latitude$to-1)),
+           by = attr(mync, "dimensions")$latitude$delta) #Note that in to is minus 1
 
 #nlat = dim(lat)
 nlat = dim(mync)[2]
@@ -102,10 +108,14 @@ lonlat.unstack <- expand.grid(lon=lon, lat=lat)
 #timestamp = as_datetime(c(time.array*60*60),origin=anio_mes_dia, tz="UTC")
 
 #This is not working for file outfile_nc4c_zip9.nc
-if (is.null(attr(mync, "dimensions")$time$values))
+# attr(mync, "dimensions")$time$offset = "1979-01-01 07:00:00 UTC"
+# attr(mync, "dimensions")$time$delta = "1 hours"
+
+if (is.null(attr(mync, "dimensions")$time$values)){
   start_time = strptime(attr(mync, "dimensions")$time$offset, "%Y-%m-%d %H:%M:%S")
   timestamp = seq(start_time, by="hour", length.out=ntime)
   attr(mync, "dimensions")$time$values = timestamp
+}
   
 timestamp = attr(mync, "dimensions")$time$values
 timestamp_string <- as.character(timestamp)
@@ -118,7 +128,7 @@ stations = data.frame(1:(nlon*nlat))
 #Folder to store output files (PDF and XLSX)
 #outputpath = "./isd2020-3/"
 #outputpath = "./ideam2020/"
-outputpath="../../ERA5/"
+outputpath="../../ERA5_isla/"
 
 #zzz = matrix to store intensity function parameters and return values using different methods
 #Records: Each record stores the result for one station. The number of records depends on the number of stations in variable 'stations'
@@ -162,7 +172,7 @@ outputpath="../../ERA5/"
 #                                               As equal to column 6 (t_average_time_per_year(At))
 #                                               Ans equal to column 12 (nt_average_time_per_year(Ant))
 
-selected_era5_stations = read.delim("./selected_era5_stations.txt", header = FALSE, sep = "\t")
+selected_era5_stations = read.delim("./selected_era5_stations_isla.txt", header = FALSE, sep = "\t")
 
 #zzz=matrix(data=NA,length(stations[,1]),136)#114)
 zzz=matrix(data=NA,length(selected_era5_stations[,1]),136)
@@ -302,7 +312,8 @@ for (latindex in 1:nlat){
       #In file 'statsfile' create the stat sheets for raw data (thunderstorm and non-thunderstorm): 
       # all_years, all_weeks, all_months, all_gaps  
       # and create the raw data time series graphic
-      source('./code/stats_raw_data.r')
+      numberofplots = stats_data(raw.data.tibble, data_label="Raw Data", prefix="all", numberofplots=numberofplots, exel_file=statsfile_OUT)
+      #source('./code/stats_raw_data.r')
     
       #create the raw.data.nt tibble data frame
       select <- dplyr::select
@@ -314,7 +325,17 @@ for (latindex in 1:nlat){
       # nt_years, nt_weeks, nt_months, nt_gaps  
       # and create the non-thunderstorm raw data time series graphic
       # and calculate yearly maxima return levels
-      source('./code/stats_raw_data_nt.r')
+      #source('./code/stats_raw_data_nt.r')
+      numberofplots = stats_data(raw.data.nt, data_label="Raw Data Non-Thunderstorm", prefix="nt", numberofplots=numberofplots, exel_file=statsfile_OUT)
+      #Yearly Maxima calculation for non-thunderstorm
+      numberofplots = yearly_maxima_and_graphs(data=raw.data.nt, 
+                                           data_label=paste0("Non-thunderstorm raw data for Station ID:", number), 
+                                           prefix="nt", 
+                                           numberofplots=numberofplots,
+                                           tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000),
+                                           exel_file=fnfitted_OUT,
+                                           ym_mle_gev=nt_ym_mle_gev,
+                                           ym_lmom_gev=nt_ym_lmom_gev)
     
       #create the raw.data.t tibble data frame
       require(dplyr)
@@ -327,7 +348,18 @@ for (latindex in 1:nlat){
       # t_years, t_weeks, t_months, t_gaps  
       # and create the thunderstorm raw data time series graphic
       # and calculate yearly maxima return levels
-      source('./code/stats_raw_data_t.r')
+      #source('./code/stats_raw_data_t.r')
+      numberofplots = stats_data(raw.data.t, data_label="Raw Data Thunderstorm", prefix="t", numberofplots=numberofplots, exel_file=statsfile_OUT)
+      #Yearly Maxima calculation for non-thunderstorm
+      numberofplots = yearly_maxima_and_graphs(data=raw.data.t, 
+                                               data_label=paste0("Thunderstorm raw data for Station ID:", number), 
+                                               prefix="t", 
+                                               numberofplots=numberofplots,
+                                               tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000),
+                                               exel_file=fnfitted_OUT,
+                                               ym_mle_gev=t_ym_mle_gev,
+                                               ym_lmom_gev=t_ym_lmom_gev)
+      
     
           #Pintar R Code (Declustering & Thresholding)
           dt <- raw.data$date.time
@@ -574,50 +606,50 @@ writeData(fn_OUT, sheet = "pp_pintar", x = zzz)
 # 16-59 ------> Considering the dataset only composed by THUNDERSTORM
 #zzz[, c(1, 15, 16:26)] -> t_MRI_poissonprocessintfunc
 addWorksheet(fn_OUT, "t_MRI_poissonprocessintfunc")
-writeData(fn_OUT, sheet = "t_MRI_poissonprocessintfunc", x = zzz[, c(1, 15, 16:26)])
+writeData(fn_OUT, sheet = "t_MRI_poissonprocessintfunc", x = zzz[, c(1:15, 16:26)])
 
 #zzz[, c(1, 15, 27:37)] -> t_MRI_gumbeltailintfunc
 addWorksheet(fn_OUT, "t_MRI_gumbeltailintfunc")
-writeData(fn_OUT, sheet = "t_MRI_gumbeltailintfunc", x = zzz[, c(1, 15, 27:37)])
+writeData(fn_OUT, sheet = "t_MRI_gumbeltailintfunc", x = zzz[, c(1:15, 27:37)])
 
 #zzz[, c(1, 15, 38:48)] -> t_MRI_gumbelquantilefunc
 addWorksheet(fn_OUT, "t_MRI_gumbelquantilefunc")
-writeData(fn_OUT, sheet = "t_MRI_gumbelquantilefunc", x = zzz[, c(1, 15, 38:48)])
+writeData(fn_OUT, sheet = "t_MRI_gumbelquantilefunc", x = zzz[, c(1:15, 38:48)])
 
 #zzz[, c(1, 15, 49:59)] -> t_MRI_POT-Poisson-GPD
 addWorksheet(fn_OUT, "t_MRI_POT-Poisson-GPD")
-writeData(fn_OUT, sheet = "t_MRI_POT-Poisson-GPD", x = zzz[, c(1, 15, 49:59)])
+writeData(fn_OUT, sheet = "t_MRI_POT-Poisson-GPD", x = zzz[, c(1:15, 49:59)])
 
 #60-103 ------> Considering the dataset only composed by NON-THUNDERSTORM
 #zzz[, c(1, 15, 60:70)] -> nt_MRI_poissonprocessintfunc
 addWorksheet(fn_OUT, "nt_MRI_poissonprocessintfunc")
-writeData(fn_OUT, sheet = "nt_MRI_poissonprocessintfunc", x = zzz[, c(1, 15, 60:70)])
+writeData(fn_OUT, sheet = "nt_MRI_poissonprocessintfunc", x = zzz[, c(1:15, 60:70)])
 
 #zzz[, c(1, 15, 71:81)] -> nt_MRI_gumbeltailintfunc
 addWorksheet(fn_OUT, "nt_MRI_gumbeltailintfunc")
-writeData(fn_OUT, sheet = "nt_MRI_gumbeltailintfunc", x = zzz[, c(1, 15, 71:81)])
+writeData(fn_OUT, sheet = "nt_MRI_gumbeltailintfunc", x = zzz[, c(1:15, 71:81)])
 
 #zzz[, c(1, 15, 82:92)] -> nt_MRI_gumbelquantilefunc
 addWorksheet(fn_OUT, "nt_MRI_gumbelquantilefunc")
-writeData(fn_OUT, sheet = "nt_MRI_gumbelquantilefunc", x = zzz[, c(1, 15, 82:92)])
+writeData(fn_OUT, sheet = "nt_MRI_gumbelquantilefunc", x = zzz[, c(1:15, 82:92)])
 
 #zzz[, c(1, 15, 93:103)] -> nt_MRI_POT-Poisson-GPD
 addWorksheet(fn_OUT, "nt_MRI_POT-Poisson-GPD")
-writeData(fn_OUT, sheet = "nt_MRI_POT-Poisson-GPD", x = zzz[, c(1, 15, 93:103)])
+writeData(fn_OUT, sheet = "nt_MRI_POT-Poisson-GPD", x = zzz[, c(1:15, 93:103)])
 
 # 104-114: ------> Considering the dataset composed simultaneously by THUNDERSTORM and NON-THUNDERSTORM
 #zzz[, c(1, 15, 104:114)] -> tnt_MRI_poissonprocessintfunc
 addWorksheet(fn_OUT, "tnt_MRI_poissonprocessintfunc")
-writeData(fn_OUT, sheet = "tnt_MRI_poissonprocessintfunc", x = zzz[, c(1, 15, 104:114)])
+writeData(fn_OUT, sheet = "tnt_MRI_poissonprocessintfunc", x = zzz[, c(1:15, 104:114)])
 
 # 115-136: ------> Test of Return Level Weights (Percentage) in the Combination of Hurricane and Non-Hurricane in POT-PP(equation 3, page 16, NIST.SP.500-301.pdf) : what percentage contributes hurricanes? and what percentage contributes non-hurricanes?
 #zzz[, c(1, 15, 115:125)] -> t_percentage_pot_pp
 addWorksheet(fn_OUT, "t_percentage_pot_pp")
-writeData(fn_OUT, sheet = "t_percentage_pot_pp", x = zzz[, c(1, 15, 115:125)])
+writeData(fn_OUT, sheet = "t_percentage_pot_pp", x = zzz[, c(1:15, 115:125)])
 
 #zzz[, c(1, 15, 126:136)] -> nt_percentage_pot_pp
 addWorksheet(fn_OUT, "nt_percentage_pot_pp")
-writeData(fn_OUT, sheet = "nt_percentage_pot_pp", x = zzz[, c(1, 15, 126:136)])
+writeData(fn_OUT, sheet = "nt_percentage_pot_pp", x = zzz[, c(1:15, 126:136)])
 
 #Save workbook to disk
 saveWorkbook(fn_OUT, fn)

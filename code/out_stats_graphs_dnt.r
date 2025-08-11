@@ -165,6 +165,16 @@ if (length(imp.vals$nt.series.dt) > 0) {
   addWorksheet(fnfitted_OUT, "nt_extRemes_GP")
   writeData(fnfitted_OUT, sheet = "nt_extRemes_GP", x = myextrRemes)
 
+  #function alexys_extRemes (POT - MLE - GP - extRemes::fevd)
+  #  extRemes::fevd(x, method="MLE", type="GP"..)
+  #sheet nt_extRemes_GP
+  #method: mle
+  #browser()
+  gppotmle = myextrRemes[ ,1:11]
+  nt_pot_mle_gp[i,10:20]=gppotmle
+  nt_pot_mle_gp[i,3]=myextrRemes[ ,12] #threshold = location
+  nt_pot_mle_gp[i,4]=myextrRemes[ ,13] #alpha scale
+  nt_pot_mle_gp[i,5]=myextrRemes[ ,14] #shape NA
 
   #extRemes berry
   library(extremeStat)
@@ -204,11 +214,70 @@ if (length(imp.vals$nt.series.dt) > 0) {
   addWorksheet(fnfitted_OUT, "nt_distLextreme_returnlev")
   myDF <- data.frame(pdf = row.names(dlf$returnlev), dlf$returnlev)
   writeData(fnfitted_OUT, sheet = "nt_distLextreme_returnlev", x = myDF)
+
+  #nt pot gumbel return levels
+  gumrl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "gum"), ])
+  weirl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "wei"), ])
+  ln3rl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "ln3"), ])
+  gparl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "gpa"), ])
+  exprl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "exp"), ])
+  gamrl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "gam"), ])
+  kaprl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "kap"), ])
+  revgumrl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "revgum"), ])
+  gevrl = as.numeric(dlf$returnlev[which(rownames(dlf$returnlev) == "gev"), ])
+  
+  nt_pot_lmon_gum[i,10:20]=gumrl
+  nt_pot_lmon_wei[i,10:20]=weirl
+  nt_pot_lmom_ln3[i,10:20]=ln3rl
+  nt_pot_lmom_gpa[i,10:20]=gparl
+  nt_pot_lmom_exp[i,10:20]=exprl
+  nt_pot_lmom_gam[i,10:20]=gamrl
+  nt_pot_lmom_kap[i,10:20]=kaprl
+  nt_pot_lmom_revgum[i,10:20]=revgumrl
+  nt_pot_lmom_gev[i,10:20]=gevrl
+  
   
   #write.xlsx(capture.output(dlf$parameter), file=fnfitted, sheetName="nt_distLextreme_parameter", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_distLextreme_parameter")
   writeData(fnfitted_OUT, sheet = "nt_distLextreme_parameter", x = capture.output(dlf$parameter))
-
+  #browser()
+  #nt pot gumbel parameters
+  nt_pot_lmon_gum[i,3]=dlf$parameter$gum$para[1] #xi location
+  nt_pot_lmon_gum[i,4]=dlf$parameter$gum$para[2] #alpha scale
+  nt_pot_lmon_gum[i,5]=NA #shape NA
+  
+  nt_pot_lmon_wei[i,3]=dlf$parameter$wei$para[1] #zeta location
+  nt_pot_lmon_wei[i,4]=dlf$parameter$wei$para[2] #beta scale
+  nt_pot_lmon_wei[i,5]=dlf$parameter$wei$para[3] #delta shape
+  
+  nt_pot_lmom_ln3[i,3]=dlf$parameter$ln3$para[2] #mulog location
+  nt_pot_lmom_ln3[i,4]=dlf$parameter$ln3$para[3] #sigmalog scale
+  nt_pot_lmom_ln3[i,5]=dlf$parameter$ln3$para[1] #zeta lowerbounds
+  
+  nt_pot_lmom_gpa[i,3]=dlf$parameter$gpa$para[1] #xi location
+  nt_pot_lmom_gpa[i,4]=dlf$parameter$gpa$para[2] #alpha scale
+  nt_pot_lmom_gpa[i,5]=dlf$parameter$gpa$para[3] #kappa shape
+  
+  nt_pot_lmom_exp[i,3]=dlf$parameter$exp$para[1] #xi location
+  nt_pot_lmom_exp[i,4]=dlf$parameter$exp$para[2] #alpha scale
+  nt_pot_lmom_exp[i,5]=NA #shape NA
+  
+  nt_pot_lmom_gam[i,3]=NA #location NA
+  nt_pot_lmom_gam[i,4]=dlf$parameter$gam$para[2] #beta scale
+  nt_pot_lmom_gam[i,5]=dlf$parameter$gam$para[1] #alpha shape
+  
+  nt_pot_lmom_kap[i,3]=dlf$parameter$kap$para[1] #xi location
+  nt_pot_lmom_kap[i,4]=dlf$parameter$kap$para[2] #alpha scale
+  nt_pot_lmom_kap[i,5]=dlf$parameter$kap$para[3] #kappa shape1
+  nt_pot_lmom_kap[i,21]=dlf$parameter$kap$para[4] #h shape2
+  
+  nt_pot_lmom_revgum[i,3]=dlf$parameter$revgum$para[1] #xi location
+  nt_pot_lmom_revgum[i,4]=dlf$parameter$revgum$para[2] #alpha scale
+  nt_pot_lmom_revgum[i,5]=NA #shape NA
+  
+  nt_pot_lmom_gev[i,3]=dlf$parameter$gev$para[1] #xi location
+  nt_pot_lmom_gev[i,4]=dlf$parameter$gev$para[2] #alpha scale
+  nt_pot_lmom_gev[i,5]=dlf$parameter$gev$para[3] #kappa shape
   #_________________________________________________
 
   #Statistics work

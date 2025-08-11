@@ -417,7 +417,7 @@ if (length(imp.vals$nt.series.dt) > 0) {
   #Plot 
   #  - PDF of Gumbel distribution with parameters of Poisson Process
   #  - Data histogram of thunderstorm (They will not fit with Gumbel PDF because is not equivalent to Poisson Process (2D) PDF)
-    library(RcmdrMisc)
+    #library(RcmdrMisc)
     .x <- seq(-300, 200, length.out=1000)
     dfG = RcmdrMisc::dgumbel(.x, location=z6, scale=z7)
     plot(.x, dfG, col="red",

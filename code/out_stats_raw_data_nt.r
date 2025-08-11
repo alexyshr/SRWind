@@ -3,7 +3,7 @@
 #      to the Excel file raw_data_station_ID_statistics.xlsx (variable 'statsfile'), 
 #      sheets nt_years, nt_weeks, nt_months, nt_gaps respectively.
 # 2) Generate the time series plot for non-thunderstorm raw data
-# 3) Calculare return levels using yearly maxima with function alexys_extRemes_yearlymaxima
+# 3) Calculate return levels using yearly maxima with function alexys_extRemes_yearlymaxima
 if (length(raw.data.nt$date.time) > 0) {
   #Print raw.data histogram
   title= paste("Frequency Histogram of Raw Data Non-Thunderstorm\n", 
@@ -53,6 +53,26 @@ if (length(raw.data.nt$date.time) > 0) {
   #write.xlsx(myextrRemesyearlymaxima$a, file=fnfitted, sheetName="nt_rawdata_RL_yearlymaxima_GEV", append=TRUE, row.names=TRUE)
   addWorksheet(fnfitted_OUT, "nt_rawdata_RL_yearlymaxima_GEV")
   writeData(fnfitted_OUT, sheet = "nt_rawdata_RL_yearlymaxima_GEV", x = myextrRemesyearlymaxima$a)
-
+  
+  #sheet nt_rawdata_RL_yearlymaxima_GEV (row 2)(row 1 are names)
+  #function: alexys_extRemes_yearlymaxima
+  #package: extRemes::fevd(ams, method="MLE", type="GEV") >>> extRemes::return.level
+  #method: mle
+  ymmlegev = myextrRemesyearlymaxima$a[1,1:11]
+  nt_ym_mle_gev[i,10:20]=ymmlegev
+  nt_ym_mle_gev[i,3]=myextrRemesyearlymaxima$a[1,13] # location
+  nt_ym_mle_gev[i,4]=myextrRemesyearlymaxima$a[1,14] # scale
+  nt_ym_mle_gev[i,5]=myextrRemesyearlymaxima$a[1,15] # #shape
+  
+  #sheet nt_rawdata_RL_yearlymaxima_GEV(row 3)(row 1 are names)
+  #function: alexys_extRemes_yearlymaxima
+  #package: fit_lmom <- extRemes::fevd(ams, method = "Lmoments", type="GEV") >>> extRemes::return.level
+  #method: lmoments
+  ymlmomgev = myextrRemesyearlymaxima$a[2,1:11]
+  nt_ym_lmom_gev[i,10:20]=ymlmomgev
+  nt_ym_lmom_gev[i,3]=myextrRemesyearlymaxima$a[2,13] # location
+  nt_ym_lmom_gev[i,4]=myextrRemesyearlymaxima$a[2,14] # scale
+  nt_ym_lmom_gev[i,5]=myextrRemesyearlymaxima$a[2,15] # #shape
+  
   numberofplots = myextrRemesyearlymaxima$b
 }

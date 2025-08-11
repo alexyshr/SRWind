@@ -1,0 +1,6 @@
+source("mcs_c_col_pot_gpa.R")
+source("mcs_c_col_pot_gum.R")
+source("mcs_c_col_pot_ln3.R")
+#source("mcs_c_col_pot_pp.R")
+#source("mcs_c_col_pot_wei.R")
+#source("mcs_c_col_ym_gev.R")

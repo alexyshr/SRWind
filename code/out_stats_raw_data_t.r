@@ -44,7 +44,7 @@ if (length(raw.data.t$date.time) > 0) {
                 main = paste0("Station ID: ",  number, "\nWind Velocity [Km/h]")))
   #assign(paste0("myprint", numberofplots), recordPlot())
   #saveRDS(eval(parse(text=paste0("myprint", numberofplots))), paste0(outputpath, "myprint", numberofplots, ".rds"))				
-  numberofpots = numberofplots + 1
+  numberofplots = numberofplots + 1
   
   #Apply yearly maxima method
   tipicalReturnPeriods = c(10,20,50,100,250,500,700,1000,1700,3000,7000)

@@ -86,9 +86,7 @@ era5_4326_sf_pol = st_read(dsn=file_era5_sf_pol)
 ```{r poorcomparison, echo=FALSE, fig.cap="IDEAM VV_AUT_10. Non-Quality Data Comparison", message=FALSE, warning=FALSE}
 
 
-#
-#IDEAM VV_AUT_10 - Non Quality Data Comparison
-#
+
 myPalette <- colorRampPalette(rev(brewer.pal(11, "YlGn")))
 sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(0, 255))
 
