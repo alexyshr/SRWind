@@ -1,0 +1,1534 @@
+```{r include_packages_3, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis and also two functions
+# used for labeling and referencing
+if(!require(devtools))
+  install.packages("devtools", repos = "http://cran.rstudio.com")
+if(!require(bookdown))
+    install.packages("bookdown", repos = "http://cran.rstudio.com")
+if(!require(thesisdown)){
+  library(devtools)
+  devtools::install_github("ismayc/thesisdown")
+  }
+if(!require(dplyr))
+    install.packages("dplyr", repos = "http://cran.rstudio.com")
+if(!require(ggplot2))
+    install.packages("ggplot2", repos = "http://cran.rstudio.com")
+
+if(!require(sf))
+    install.packages("sf", repos = "http://cran.rstudio.com")
+if(!require(rnaturalearth))
+    install.packages("rnaturalearth", repos = "http://cran.rstudio.com")
+if(!require(rnaturalearthdata))
+    install.packages("rnaturalearthdata", repos = "http://cran.rstudio.com")
+if(!require(ggspatial))
+    install.packages("ggspatial", repos = "http://cran.rstudio.com")
+if(!require(RColorBrewer))
+    install.packages("RColorBrewer", repos = "http://cran.rstudio.com")
+if(!require(knitr))
+    install.packages("knitr", repos = "http://cran.rstudio.com")
+if(!require(kableExtra))
+    install.packages("kableExtra", repos = "http://cran.rstudio.com")
+if(!require(raster))
+    install.packages("raster", repos = "http://cran.rstudio.com")
+if(!require(RStoolbox))
+    install.packages("RStoolbox", repos = "http://cran.rstudio.com")
+if(!require(gridExtra))
+    install.packages("gridExtra", repos = "http://cran.rstudio.com")
+if(!require(ggrepel))
+    install.packages("ggrepel", repos = "http://cran.rstudio.com")
+if(!require(grid))
+    install.packages("grid", repos = "http://cran.rstudio.com")
+if(!require(cowplot))
+    install.packages("cowplot", repos = "http://cran.rstudio.com")
+library(devtools)
+library(bookdown)
+library(thesisdown)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggspatial)
+library(RColorBrewer)
+library(knitr)
+library(kableExtra)
+library(raster)
+library(RStoolbox)
+library(gridExtra)
+library(ggrepel)
+library(grid)
+library(cowplot)
+library(stars)
+```
+
+```{r onestationppp, echo=FALSE, cache= F, include=FALSE}
+#POT-PP in one ISD Station
+#
+#Output of this code goes to the folder ‘…/index/data/’ of the ‘thesisdown’ root folder.
+source('./code/pp_one_station.r')
+```
+
+```{r ds, echo=FALSE, cache= F, include=FALSE}
+#Downscaling Support - Sources Comparison
+#
+#Important Note for next line of code (seven lines bellow):
+#
+#Not run when Knitting. Run it only in RStudio before Knit process, that is why next line of code is out-commented (using #). 
+#This code generates some graphics in format RDS, used inside Results and Discussion chapter. It is not necessary to run again, 
+#unless current RDS files already generated, are not usable for changes in R packages versions (possible situation for future)
+#Output of this code goes to the folder ‘…/index/data/’ of the ‘thesisdown’ root folder.
+#
+#source('./code/comparing_sources_pqrs_20199050080932_VV_AUT.r')
+#
+```
+
+# Results and Discussion {#rmd-results}
+
+This section has four main elements. First, the data source comparison (post standardization process) to face the downscaling issue, then, the process of fitting POT-PP to the ISD station 801120, next, non-hurricane maps (ISD and ERA5) and final maps will be displayed, and finally, a detailed discussion of the results and future work is highlighted.
+
+## Data Standardization and Downscaling Support
+
+Looking for a statistical justification in the use of ISD (model) and ERA5 databases (forecast), as input data for this study, and considering the *downscaling approach* presented previously, data sources ISD and IDEAM were standardized to enable comparison. Standardization consisted of transforming the data to be equivalent to $V_3$ (3-s gust), 10 meters of anemometer height, and open space roughness. In the comparison process, it was checked if the velocity values (standardized) in the three sources, for equal stations and dates, were similar in magnitude.
+
+### Data Standardization
+
+None of the sources required anemometer height standardization. [@Lettau1969] was used for roughness standardization of ISD and IDEAM, applying the method station by station. Gust velocities standardization was done using Durst curve. To obtain $V_3$ from Durst curve, it was required to start from $V_{3600}$ (average hourly speed), or from a different wind gust speed, for instance $V_5$ (5-s gust). Some elements that are relevant to each data source are described below.
+
+ERA5:
+
+* Variable *10m wind gust - 10fg* of ERA5 data source does not need any standardization, because it comes standardized from the source.
+
+ISD:
+
+* Wind velocity from ISD comes from source as $V_5$, that is, five seconds gust wind velocity. To standardize from $V_5$ to $V_3$, using Durst curve, the correction factor is 1.03.
+
+* Wind velocity $V_5$ from 74 ISD stations, was standardized station by station, using procedure described in sections _[Surface Roughness at Open Terrain](#rmd-roughness)_, and _[Averaging Time 3-s Gust](#rmd-gust)_.
+
+IDEAM:
+
+* It was not possible to obtain the _average hourly speed_ $V_{3600}$ directly from the institute (IDEAM), see Table \@ref(tab:tabledatasources2), but it was calculated from received variables: a *good* estimator from _instantaneous wind velocity each 2 minutes VV_AUT_2_, and a *poor* estimator from _instantaneous wind velocity each 10 minutes VV_AUT_10_.
+
+* The Durst curve with $V_{3600}$ was used to calculate gust speeds. To standardize from $V_{3600}$ to $V_3$, the correction factor is 1.51.
+
+
+### Data Comparison
+
+The available IDEAM data allowed two comparison processes, with quality data for few stations, and with low quality data but available for all stations. In both cases to make the use of ISD and ERA5 viable, its time series are expected to be as similar as possible to IDEAM (field measurements). As was described in methodology section, to verify similarity two types of graphics were constructed: **time series overlay**, and **scatter plot graphics**.
+
+#### Quality data comparison of instantaneous wind velocity each 2 minutes (VV_AUT_2)
+
+Despite the fact that the ISD database (for Colombia) is based on the measured data of the IDEAM stations, their identifiers are completely different, and their names and locations in most cases have significant differences. In order to compare ISD and IDEAM sources, a manual station-by-station procedure was required to match the stations of each source. The IDEAM variable instantaneous wind velocity each 2 minutes (VV_AUT_2) was available for twenty (20) stations, of which only twelve (12) were _perfectly equivalent_ to ISD stations (Table \@ref(tab:table12stations) and map in left panel of Figure \@ref(fig:qualitycomparison2))
+
+VV_AUT_2 dataset was transformed to $V_{3600}$ (average hourly speed) averaging all 20 values available per hour. For twelve matching stations, wind velocity $V_{3600}$ was standardized station by station using procedure described in _[Surface Roughness at Open Space](#rmd-roughness)_ section and _[Averaging Time 3-s Gust](#rmd-gust)_. For the same twelve ISD and IDEAM standardized stations, a comparison was done against matching ERA5 stations (the corresponding cell in ERA5 that has within ISD and IDEAM locations).
+
+The stations described in each row of the Table \@ref(tab:table12stations) were compared by generating scatter plots and common time series graphics. For the stations IDEAM 28025502 and ERA5 416 corresponding to the tenth row of the mentioned table, there was high correspondence between sources. Unfortunately, in the stations corresponding to the other eleven rows, downscaling support was not reflected.
+
+
+```{r table12stations, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+#data_sources_thesis_summary1 <-read.csv("./data/data_sources_thesis_summary1.csv",header=TRUE, stringsAsFactors = F)
+stationssample = data.frame(
+  ISD_ID= as.character(
+    c(803980, 803700, 802110, 802100, 801120, 801100, 800970, 800940, 800630, 800360, 800350, 800280)), 
+  IDEAM_ID = as.character(
+    c(48015050, 52055230, 26125061, 26125710, 23085270, 27015330, 16015501, 23195502, 13035501, 28025502, 15065180, 29045190)),  
+  stringsAsFactors=FALSE)
+stationssamplewithera5 = data.frame(
+  ISD_ID= as.character(
+    c(803980, 803700, 802110, 802100, 801120, 801100, 800970, 800940, 800630, 800360, 800350, 800280)), 
+  IDEAM_ID = as.character(
+    c(48015050, 52055230, 26125061, 26125710, 23085270, 27015330, 16015501, 23195502, 13035501, 28025502, 15065180, 29045190)),
+  ERA5_STATION = c(
+           "3320, (37, 68), [−70, −4.25]",
+           "2309, (6, 48), [−77.75, 0.75]",
+           "1582, (14, 33), [−75.75, 4.5]",
+           "1533, (14, 32), [−75.75, 4.75",
+           "1240, (15, 26), [−75.5, 6.25]",
+           "1240, (15, 26), [−75.5, 6.25]",
+           "909, (27, 19), [−72.5, 8]",
+           "1102, (24, 23), [−73.25, 7]",
+           "749, (14, 16), [−75.75, 8.75]",
+           "416, (24, 9), [−73.25, 10.5]",
+           "221, (25, 5), [−73, 11.5]",
+           "312, (18, 7), [−74.75, 11]"
+           ),
+  stringsAsFactors=FALSE)
+kable(stationssamplewithera5, align=rep('l', 3),
+      col.names = c("ISD ID", "IDEAM ID", "ERA5 ID, (col,row), [lon,lat]"),
+      caption = "Quality Data Comparison",
+      caption.short = "Quality Data Comparison",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "0.6in") %>%
+      column_spec(2,width = "0.6in") %>%
+      column_spec(3,width = "1.8in") %>%
+kable_styling(font_size = 10, latex_options="scale_down")
+```
+
+
+
+```{r qualitycomparison1, message=FALSE, warning=FALSE, include=FALSE}
+#
+#IDEAM VV_AUT_2 - Quality Data Comparison
+#
+con1 = src_postgres(dbname = "winddata", host = "localhost", port = 5432, user = "user1", password = "user1")
+
+#Get Ideam Stations Table
+originalfields4 = c("objectid", "codigo1", "nombre", "latitud", "longitud", "latitud", "longitud", "categoria")
+newnames4 = c("objectid", "codigo1", "nombre", "latitud", "longitud", "y", "x", "categoria")
+originalfields4 = paste(originalfields4, " as ", newnames4, sep="")
+originalfields4 = paste(originalfields4, collapse= ", ", sep = "")
+query4 = paste("select", originalfields4, "from ideam_all_stations", "where codigo1 IN (48015050, 52055230, 26125061, 26125710, 23085270, 27015330, 
+ 16015501, 23195502, 13035501, 28025502, 15065180, 29045190)", sep=" ")
+ideam_stations = as_tibble(tbl(con1, sql(query4)))
+Encoding(ideam_stations$categoria) <- "UTF-8"
+Encoding(ideam_stations$nombre) <- "UTF-8"
+originalfields3 = c("id", "usaf", "station_name", "latitud", "longitud", "latitud", "longitud")
+newnames3 = c("id", "usaf", "station_name", "latitud", "longitud", "y", "x")
+originalfields3 = paste(originalfields3, " as ", newnames3, sep="")
+originalfields3 = paste(originalfields3, collapse= ", ", sep = "")
+query3 = paste("select", originalfields3, "from isd_all_stations where usaf IN ('803980', '803700', '802110', '802100', '801120', '801100', 
+ '800970', '800940', '800630', '800360', '800350', '800280')", sep=" ")
+
+isd_stations = as_tibble(tbl(con1, sql(query3)))
+ideam_stations = st_as_sf(ideam_stations, coords = c("longitud", "latitud"), crs = 4326)
+isd_stations = st_as_sf(isd_stations, coords = c("longitud", "latitud"), crs = 4326)
+
+ideam_stations3 <- ideam_stations %>% filter(codigo1 %in% c(15065180, 29045190, 28025502)) 
+ideam_stationso <- ideam_stations %>% filter(codigo1 %in% c(48015050, 52055230, 26125061, 26125710, 23085270, 27015330, 16015501, 23195502, 
+ 13035501))
+isd_stations3 <- isd_stations %>% filter(usaf %in% c('800350', '800280', '800360'))
+isd_stationso <- isd_stations %>% filter(usaf %in% c('803980', '803700', '802110', '802100', '801120', '801100', '800970', '800940', '800630'))
+
+
+file_era5_st = "./data/era5grid_left_right.tif"
+era5_4326_st = read_stars(file_era5_st)
+era5_4326_st = setNames(era5_4326_st, "Station")
+
+file_col_st = "./data/col2.tif"
+col_4326_st = read_stars(file_col_st)
+col_4326_st = setNames(col_4326_st, "col_4326_st")
+
+file_era5_sf_point = "./data/era5grid_left_right.shp"
+era5_4326_sf_point = st_read(dsn=file_era5_sf_point)
+
+file_era5_sf_pol = "./data/era5grid_left_right_pol.shp"
+era5_4326_sf_pol = st_read(dsn=file_era5_sf_pol)
+
+file_col_sf_pol = "./data/COLOMBIA.shp"
+col_4326_sf_pol = st_read(dsn=file_col_sf_pol)
+
+img_stack_col=stack(file_col_st)
+img_stack_col.crop = crop(img_stack_col, extent(col_4326_sf_pol))
+img_stack_col.mask = mask(img_stack_col.crop, col_4326_sf_pol)
+```
+
+
+```{r qualitycomparison2, echo=FALSE, fig.cap="IDEAM VV_AUT_2 - Quality Data Comparison", message=FALSE, warning=FALSE}
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "YlGn")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(0, 255))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+k = era5_4326_sf_pol
+
+big <-ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite",  size=0.1) + 
+  geom_text(data= world_points[venezuela,],aes(x=-68.5, y=8.5, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.5, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-3.7, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 4) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 4) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  geom_rect(mapping=aes(xmin=-73.7, xmax=-72.8, ymin=10.1, ymax=10.9), color="red", alpha=0, size=0.1) +
+  geom_sf(data = ideam_stations, size=2, shape=23, color= "red", show.legend = "point") + 
+  geom_text_repel(data = ideam_stationso, size=2, aes(x=x, y=y, label = codigo1), direction="x", segment.size=0.1) +
+  geom_text_repel(data = ideam_stations3, size=2, aes(x=x, y=y, label = codigo1), direction="x", segment.size=0.1, nudge_x=-0.5) +
+  geom_sf(data = isd_stations, size=2, shape=3, color= "blue", show.legend = "point") +
+  geom_text_repel(data = isd_stationso, size=2, aes(x=x, y=y, label = usaf), direction="y", segment.size=0.1) +
+  geom_text_repel(data = isd_stations3, size=2, aes(x=x, y=y, label = usaf), direction="x", segment.size=0.1, nudge_x=0.5) +
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.2, "cm"), line_width = 0.5, text_cex = 0.5) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"), height = unit(1, "cm"), 
+   width = unit(1, "cm"), style = north_arrow_fancy_orienteering) +
+  coord_sf(xlim = c(-79.5, -66.5), ylim = c(-5.4, 12.3), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Quality Data Comparison\nTwelve matching stations from IDEAM and ISD") + 
+  theme(plot.title = element_text(size=8)) +
+  theme(axis.text.x= element_text(size=7)) + 
+  theme(axis.text.y= element_text(size=7)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -10))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10)))
+  
+small <- ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite",  size=0.1) + 
+  geom_sf(data = k, colour="black", fill=NA, size=0.1) + 
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.5, y=9.2, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-79.2, y=-1, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=3, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 4) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 4) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"),  size=0.1)+
+  geom_sf(data = ideam_stations, size=3, shape=23, color= "red", show.legend = "point") + 
+  geom_sf_text(data = ideam_stations, aes(label = codigo1), size=2, position = position_nudge(x = -0.11)) +
+  geom_sf(data = isd_stations, size=3, shape=3, color= "blue", show.legend = "point") +
+  geom_sf_text(data = isd_stations, aes(label = usaf), size=2, position = position_nudge(x = +0.09)) +
+  geom_sf_label(data = k, aes(label = DN), size=2) +
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.2, "cm")) +
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.05, "in"), pad_y = unit(0.05, "in"), height = unit(1, "cm"), 
+   width = unit(1, "cm"), style = north_arrow_fancy_orienteering) +
+  coord_sf(xlim = c(-73.7, -72.8), ylim = c(10.1, 10.9), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Quality Data Comparison\nStations 28025502 from IDEAM, \n800360 from ISD, and 416 from ERA5") +
+  theme(plot.title = element_text(size=8)) +
+  theme(axis.text.x= element_text(size=7)) + 
+  theme(axis.text.y= element_text(size=7)) + 
+  theme(panel.border = element_rect(colour = "red"))+
+  #theme(plot.background = element_rect(color = "black")) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5), panel.background = element_rect(fill = "aliceblue"))
+grid.arrange(big, small, ncol=2)
+```
+
+The stations corresponding to the map in the right panel of Figure \@ref(fig:qualitycomparison2) and scatter plot in Figure \@ref(fig:sideamera5), show high correspondence between sources because green regression line (empirical) is very similar to $45^\circ$ line (theoretical). Axis $x$ in m/s correspond to IDEAM station 28025502, and axis $y$ (with same units) contains ERA5 416 station (cell with center point in $-73.25^\circ$ longitude, and $10.5^\circ$ latitude). The points in the upper part of Figure \@ref(fig:sideamera5) that move away from the global trend of the correlation, correspond to erroneous field measurements (sensor failure) of the IDEAM meteorological station. The graph shows some statistics and coefficients of the linear regression model; the value **P** is equivalent to the p-value for the slope of the regression line, i.e. the probability of observing any value equal or larger than t-statistic.
+
+```{r sideamera5, echo=FALSE, fig.align="center", fig.cap="Quality Data Comparison. High Similarity Between Sources", message=FALSE, warning=FALSE, fig.width=4, fig.height=3}
+#
+#Quality Data Comparison. High similarity between sources
+#
+dat1 <- readRDS("data/comparison13.rds")
+dat1
+```
+
+
+#### Non-quality data comparison of instantaneous wind velocity each 10 minutes (VV_AUT_10)
+
+IDEAM variable instantaneous wind velocity each 10 minutes (VV_AUT_10) was available for 204 stations, despite $V_{3600}$ calculated from this source is not an accurate or quality estimator, the comparison results are shown in Figure \@ref(fig:poorcomparison). Downscaling support was 'Good' comparing IDEAM and/or ISD stations with twenty-three (23) ERA5 stations (2261, 1971, 2066, 2020, 2260, 1875, 2213, 2637, 1442, 1583, 1501, 1582, 1381, 1493, 1485, 1397, 1338, 1055, 511, 1644, 515, 221, 1038), and 'Very Good' comparing IDEAM and/or ISD with five (5) ERA5 stations (265, 360, 78, 312, 416).
+
+Table \@ref(tab:tableverygood) shows in each row compared stations with 'Very Good' downscaling results. Figure \@ref(fig:verygoodxts) shows an example of a very good match in the time series plot for the ERA5 station 78 vs IDEAM stations 15075501 and 15079010. Figure \@ref(fig:verygood) shows four different very good matching scatter plots: (a) IDEAM 15015120 vs ERA5 265, (b) IDEAM 29004520 vs ERA5 312, (c) IDEAM 15079010 vs ERA5 78, and (d) IDEAM 15075501 vs ERA5 78. Red line in each graphic represent the desired $45^\circ$ line, where all points should fall, if the data sources would be exactly the same (theoretical behavior when there is equivalence of sources), and green line represents the linear regression line (empirical or real behavior when making the comparison).
+
+```{r poorcomparison, echo=FALSE, fig.cap="IDEAM VV_AUT_10. Non-Quality Data Comparison", message=FALSE, warning=FALSE}
+#
+#IDEAM VV_AUT_10 - Non Quality Data Comparison
+#
+myPalette <- colorRampPalette(rev(brewer.pal(11, "YlGn")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(0, 255))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+pts <- do.call(rbind, st_centroid(st_geometry(era5_4326_sf_pol)))
+x = pts[,1]
+y = pts[,2]
+
+era5_4326_sf_pol$x = x
+era5_4326_sf_pol$y = y
+
+era5_4326_sf_pol_filter_good = era5_4326_sf_pol %>% filter(DN %in% c(2261, 1971,2066,2020,2260,1875,2213,2637,1442,1583,1501,1582,1381,1493,1485,
+ 1397,1338,1055,511,1644,515,221,1038))
+
+era5_4326_sf_pol_filter_very_good = era5_4326_sf_pol %>% filter(DN %in% c(265,360,78,312,416))
+
+era5_4326_sf_pol_col1 = era5_4326_sf_pol %>% filter(DN %in% c(1, 50, 148, 246, 344, 442, 540, 638, 736, 834, 932, 1030, 1128, 1226, 1324, 1422, 
+ 1520, 1618, 1716, 1814, 1912, 2010, 2108, 2206, 2304, 2402, 2500, 2598, 2696, 2794, 2892, 2990, 3088, 3186, 3284, 3333))
+
+era5_4326_sf_pol_col49 = era5_4326_sf_pol %>% filter(DN %in% c(49, 147, 245, 343, 441, 539, 637, 735, 833, 931, 1029, 1127, 1225, 1323, 1421, 1519, 
+ 1617, 1715, 1813, 1911, 2009, 2107, 2205, 2303, 2401, 2499, 2597, 2695, 2793, 2891, 2989, 3087, 3185, 3283, 3381))
+
+ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite",  size=0.1, alpha=0.7) + 
+  ggRGB(img_stack_col.mask, r = 1, g = 2, b = 3, ggLayer = TRUE, alpha=0.8)+
+  sc+
+  geom_sf(data = era5_4326_sf_pol, colour="grey", fill=NA, size=0.1) + 
+  geom_sf(data = era5_4326_sf_pol_filter_good, aes(fill = "Good: 23"), colour="black", size=0.1, alpha=1, show.legend = "polygon") +
+  geom_sf(data = era5_4326_sf_pol_filter_very_good, aes(fill = "Very Good: 5"), colour="black", size=0.1, alpha=1, show.legend = "polygon") +
+  scale_fill_manual(values = c("Good: 23" = "yellow", "Very Good: 5" = "orange"), name="Downscaling Support") + #, label=c("dd")) +  
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  geom_text_repel(data = era5_4326_sf_pol_col1, size=2, aes(x=x, y=y, label = DN), direction="y", segment.size=0.1, segment.color= "grey50", 
+   color="grey50", nudge_x=-1, hjust=1, box.padding=0.1) +
+  geom_text_repel(data = era5_4326_sf_pol_col49, size=2, aes(x=x, y=y, label = DN), direction="y", segment.size=0.1, segment.color= "grey50", 
+   color="grey50", nudge_x=+1, hjust=0, box.padding=0.1) +
+  coord_sf(xlim = c(-81.25, -64.75), ylim = c(-5, 13), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("ERA5 grid, cells IDs from 1 to 3381 (49 cols, 69 rows)\nISD-IDEAM-ERA5 'poor data' comparison") + 
+  theme(plot.title = element_text(size=8)) +
+  theme(axis.text.x= element_text(size=7)) + 
+  theme(axis.text.y= element_text(size=7)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -10))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10)))
+```
+
+
+```{r tableverygood, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+tableverygood <-read.csv("./data/poor_datasource_comparison_very_good_match.csv",header=TRUE, stringsAsFactors = F)
+
+kable(tableverygood, linesep = "", align=rep('l', 3),
+      col.names = c("ISD ID", "IDEAM ID", "ERA5: ID, (col,row), [lon,lat]"),
+      caption = "Non-Quality Comparison. Very good downscaling support.",
+      caption.short = "Non-Quality Data Comparison",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "0.6in") %>%
+      column_spec(2,width = "0.6in") %>%
+      column_spec(3,width = "1.8in") %>%
+kable_styling(font_size = 10, latex_options="scale_down")
+```
+
+Note that although the Table \@ref(tab:tableverygood) has nine records, each for a different IDEAM station, there are only five ERA5 stations because some of them are repeated, for example station 78 that appears three times. Additionally, there are only two ISD stations. The value 'NA' means that for the corresponding ERA5 and IDEAM station (same row), there is not an ISD station located inside the ERA5 cell space ($0.25^\circ * 0.25^\circ$). Velocities in the axis $y$ of Figure \@ref(fig:verygoodxts) and all the axis in Figure \@ref(fig:verygood) are in m/s. The regression model coefficients are shown for the green regression lines in Figure \@ref(fig:verygood): adjusted R2, line intercept, line slope, and the probability $Pr(>|t|)$ (the significance of the estimate increases as p-value decreases).
+
+
+```{r verygoodxts, echo=FALSE, fig.cap="Time Series Graphic for 'Very Good' Downscaling Support", message=FALSE, warning=FALSE, fig.height=3}
+#
+#Non Quality Data Comparison. Time Series Graphic for 'Very Good' Downscaling Support
+#
+tl = readRDS(file="./data/eracomparisonideam_188_78_plotxts.rds")
+tl
+```
+
+
+```{r verygood, echo=FALSE, fig.cap="Scatter Plots for 'Very Good' Downscaling Support", message=FALSE, warning=FALSE}
+#
+#Non Quality Data Comparison: Scatter plots for 'Very Good' Downscaling Support
+#
+par(mfrow=c(3,2))
+par(mar=c(0,0,0,0))
+par(oma=c(0,0,0,0))
+
+cl = readRDS(file="./data/eracomparisonideam_129_1_2_265_plotgg.rds")
+cr = readRDS(file="./data/eracomparisonideam_195_1_2_312_plotgg.rds")
+bl = readRDS(file="./data/eracomparisonideam_188_1_3_78_plotgg.rds")
+br = readRDS(file="./data/eracomparisonideam_188_1_2_78_plotgg.rds")
+
+plot_grid(cl, cr, bl, br, ncol = 2, labels=c("A", "B", "C", "D"), label_size = 7, label_colour = "red")
+```
+
+
+## POT-PP for ISD Station 801120
+
+Figure \@ref(fig:station801120) shows the satellite image (source Google Earth) of ISD station 801120, located in the international airport 'José María Córdova', municipality of Rio Negro (Antioquia, Colombia), with latitude $6.125^\circ$, and longitude $-75.423^\circ$ WGS84 coordinates. Red circle represents an influence radius of 800 meters. Table \@ref(tab:cf801120) shows different calculations related to correction factors applied to this station, using procedure described in sections _[Surface Roughness at Open Terrain](#rmd-roughness)_, and _[Averaging Time 3-s Gust](#rmd-gust)_.
+
+```{r station801120, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Location of ISD Station 801120", fig.align="center", dpi=420}
+include_graphics(path = "figure/801120.jpg")
+```
+
+
+
+```{r cf801120, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+cf  = data.frame (Variable = c("Roughness - $Z_o$", "Empirical exponent - $\\alpha$", "Gradient height - $z_g$", "Exposure coefficient - $K_z$", "$F_{exposition}$", "Gust factor for $V_3$" ), Value=c(0.051, 8.38, 310.56, 0.88, 1.07, 1.03))
+
+kable(cf, align=c('l', 'c'),  digits = c(1, 2), format = "latex", escape = FALSE,
+      col.names = c("Variable", "Value"),
+      caption = "Corrections Factors for ISD Station 801120",
+      caption.short = "Corrections Factors for ISD Station 801120",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "2in") %>%
+      column_spec(2,width = "0.6in") %>%
+      #column_spec(3,width = "1.8in") %>%
+kable_styling(font_size = 10, latex_options="scale_down")
+```
+
+### Raw Data, De-clustering, and Thresholding
+
+As storm information is not available for any of the data sources, all the data for the station was classified as *non-thunderstorm*. According to _[POT-PP](#pot-pp)_ method described in _[Methodology](#rmd-method)_, the first process applied to original time series _raw data_, is _[de-clustering](#decluster)_, and then, _[thresholding](#thresholding)_. 
+
+Non-thunderstorm raw data for ISD station 801120 has `r sum(years_all$count)` records, from `r index(years_all)[1]` to `r index(years_all)[length(years_all$count)]`, corresponding to a total amount time in days of `r format(imp.vals$nt.length.time, scientific=F, digits = 0)`, and to an average number of events per year of `r round(imp.vals$n.nthunders.per.year, 1)`, which means that the average duration of an event is `r round(365/imp.vals$n.nthunders.per.year, 1)` days (average size in days of a cluster). After _[de-clustering](#decluster)_ and _[thresholding](#thresholding)_ processes, the number of records decreases to `r sum(years_declu_nt$count)`. Time series graphics are related in Figure \@ref(fig:ts), showing the data before (left) and after (right) applying the mentioned processes. Detailed yearly statistics are reported in Table \@ref(tab:years801120), also including summary for before (left), and after (right). 
+
+```{r years801120, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+#years_declu_nt
+#years_all
+
+labelyears_all = year(years_all)
+years_all_1 = as.data.frame(years_all)
+rownames(years_all_1) = labelyears_all
+
+labelyears_declu_nt = year(years_declu_nt)
+years_declu_nt_1 = as.data.frame(years_declu_nt)
+rownames(years_declu_nt_1) = labelyears_declu_nt
+
+
+years_both <- merge(years_all_1, years_declu_nt_1, by=0, all=TRUE, suffixes = c(".rd",".dc")) 
+
+years_both$count.dc[is.na(years_both$count.dc)] <- 0  
+
+#years1$Year = labelyears
+kable(years_both, align=rep('l', 9),  digits = c(0,0,1,1,1,0,1,1,1), 
+      col.names = c("Year", "Count", "Mean", "Min", "Max","Count", "Mean", "Min", "Max"),
+      caption = "Yearly statistics of raw data and de-clustered data for ISD station 801120",
+      caption.short = "Yearly Statistics for ISD Station 801120",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "0.3in") %>%
+      column_spec(2,width = "0.3in") %>%
+      column_spec(3,width = "0.3in") %>%
+      column_spec(4,width = "0.3in") %>%
+      column_spec(5,width = "0.3in") %>%
+      column_spec(6,width = "0.3in") %>%
+      column_spec(7,width = "0.3in") %>%
+      column_spec(8,width = "0.3in") %>%
+      column_spec(9,width = "0.3in") %>%
+      kable_styling(font_size = 9, latex_options="scale_down") %>%
+      add_header_above(c(" ", "Raw Data" = 4, "Declustered Data" = 4))
+```
+
+It can be seen in the Table \@ref(tab:years801120) that de-clustered data has zero records for some years. This situation is due to that all the data for each one of those years (2001, 2007, 2011, 2013, 2018, and 2019), belonged to a cluster that started the previous year or finished the next year, and the unique chosen maximum value (the value representative for the cluster) was found in the previous or next year, but not in mentioned years of zero records.
+
+
+```{r ts, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Non-Storm Time Series. ISD Station 801120. Raw Data(L). De-clustered(R)",  fig.align="center", fig.height=2, fig.width=4.5}
+#
+#Non-Thunderstorm Time Series for ISD station 801120. Left: Raw Data. Right: De-clustered Data
+#
+plot_grid(myprint1, NULL, myprint5, ncol = 3,  rel_widths = c(1,0.26,1))
+```
+
+Using de-clustered data, it is only necessary to calculate optimal threshold for non-thunderstorm data, because there are no records classified as thunderstorm in any data source. Many non-thunderstorm thresholds were tested, to choose the best one using the W statistic, as described in section _[Thresholding](#thresholding)_ of the _[Methodology](#rmd-method)_. 
+
+Figure \@ref(fig:page6) shows a very good fit in resulting W-Statistic plot, for optimal non-thunderstorm threshold $b_{nt} =$ _`r z5`_$\frac{km}{h}$, with a minimum W distance of `r format(z8, scientific=F, digits = 2)`, for ISD station 801120, where empirical values (black points) are very close or similar to theoretical values (red line).
+
+
+```{r page6, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="POT - Thresholding. ISD Station 801120", size="footnotesize", fig.align="center", fig.width=2.5, fig.asp=1}
+#
+#POT - Thresholding
+#
+dat <- readRDS("data/myprint6.rds")
+dat
+```
+
+### Fitted PDF and CDF, and Goodness of Fit
+
+Equation \@ref(eq:ppintensityfunction), defined in section _[POT-PP](#method-pot-pp)_ of the _[Methodological Framework](#rmd-thefra)_, was used as intensity function $\lambda(t, y) = \lambda_{nt}(y)$. When shape $\zeta_t$ is equal to zero (as it is in this study) an equivalent intensity function is described in Equation \@ref(eq:ppspecificintensityfunction) defined in terms of the parameters location ($\omega_t$), and scale ($\psi_t$). Related PDF and CDF functions are referenced in Equations \@ref(eq:pppdf), where the domain $D$ constraint the data above the threshold _b_, and the time to a non-thunderstorm period, and \@ref(eq:ppcdf) respectively.
+
+* Intensity function: $\frac{1}{\psi_{nt}}\exp\left(\frac{-(y-\omega_{nt})}{\psi_{nt}}\right)$
+
+* PDF: $f(t,y) = \frac{\lambda(t,y)}{\int_D\lambda(t,y)\,dt\,dy}$
+
+* CDF: $F(t,y) = P(y \leq Y) = \frac{\int_b^Y\lambda(y,t)\,dy}{\int_b^\infty\lambda(y,t)\,dy}$
+
+After fitting the intensity function to the domain $D$, the resulting parameters for ISD station 801120, are location $\omega_t$ equal to `r format(z6, scientific=F, digits = 4)`, and scale $\psi_t$ equal to `r format(z7, scientific=F, digits = 4)`. Figure \@ref(fig:page8) shows the histogram and fitted PDF in panel A, Q-Q plot (theoretical quantiles against empirical ones) in panel B,  empirical cumulative distribution against fitted CDF in panel C, and P-P plot (theoretical probabilities against empirical ones) in panel D. In all four panels, it can be seen that there is a very good visual correspondence between empirical data (points and histogram) and theoretical adjustment (lines). 
+
+
+```{r page8, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Goodness of Fit Graphic Diagnosis. Station 801120", fig.align="center", fig.width=5, fig.height=4}
+#
+#Graphic Diagnosis Of Goodness of Fit. Station 801120
+#
+replayPlot(myprint8)
+add_label <- function(xfrac, yfrac, label, pos = 4, ...) {
+  u <- par("usr")
+  x <- u[1] + xfrac * (u[2] - u[1])
+  y <- u[4] - yfrac * (u[4] - u[3])
+  text(x, y, label, pos = pos, ...)
+}
+par(xpd = TRUE)
+add_label(-0.06, 0.01, "A", cex=0.6, col="red")
+add_label(0.47, 0.01, "B", cex=0.6, col="red")
+add_label(-0.06, 0.54, "C", cex=0.6, col="red")
+add_label(0.47, 0.54, "D", cex=0.6, col="red")
+```
+
+Results of formal goodness of fit statistics for 'Kolmogorov-Smirnov D', 'Cramer-von Mises T' and 'Anderson-Darling A' are `r format(mygof$ks, scientific=F, digits = 2)`, `r format(mygof$cvm, scientific=F, digits = 2)`, and `r format(mygof$ad, scientific=F, digits = 3)` respectively. For a proposed null hypothesis, which indicates that the data conforms to a POT-PP, all resulting p-values using statistics D, T and A, confirm that there is no statistical evidence to reject stated hypothesis. Resulting p-value for statistic D is `r format(mykstest$p.value, scientific=F, digits = 2)`. Another available criterion to measure the quality of the fitted process are  'Akaike's Information Criterion', and 'Bayesian Information Criterion', with values `r format(mygof$aic, scientific=F, digits = 5)`, and `r format(mygof$bic, scientific=F, digits = 5)` respectively. The Root Mean Square Error (RMSE), calculated using theoretical versus empirical CDF, is `r format(rmse, scientific=F, digits = 2)`.
+
+```{r fitpp, eval=FALSE, fig.align="center", fig.cap="Graphic Diagnosis Of Goodness of Fit. Station 801120", fig.height=4, fig.width=5, message=FALSE, warning=FALSE, include=FALSE}
+opar <- par(no.readonly = TRUE)
+#par(opar)
+
+
+plotpdf<-function(){
+  par(pty='m')
+  par(bg="white")
+  #plot(fpnt, lwd=2, col="cadetblue3")
+  par(mar=c(2,2,1,0))
+  par(oma=c(0,0,0,0))
+  par(mgp=c(1,0.4,0))
+  denscomp(fpnt, lwd=0.5, cex=0.5, cex.main=0.6, cex.axis=0.5, cex.lab=0.5, tck=-0.02, addlegend = FALSE)
+}
+
+plotpdfqqplot<-function(){
+  par(pty='m')
+  par(bg="white")
+  #plot(fpnt, lwd=2, col="cadetblue3")
+  par(mar=c(2,2,1,0))
+  par(oma=c(0,0,0,0))
+  par(mgp=c(1,0.4,0))
+  qqcomp(fpnt, lwd=0.5, cex=0.5, cex.main=0.6, cex.axis=0.5, cex.lab=0.5, tck=-0.02, addlegend = FALSE)
+}
+
+plotcdf<-function(){
+  par(pty='m')
+  par(bg="white")
+  #plot(fpnt, lwd=2, col="cadetblue3")
+  par(mar=c(2,2,1,0))
+  par(oma=c(0,0,0,0))
+  par(mgp=c(1,0.4,0))
+  cdfcomp(fpnt, lwd=0.5, cex=0.5, cex.main=0.6, cex.axis=0.5, cex.lab=0.5, tck=-0.02, addlegend = FALSE)
+}
+
+plotppplot<-function(){
+  par(pty='m')
+  par(bg="white")
+  #plot(fpnt, lwd=2, col="cadetblue3")
+  par(mar=c(2,2,1,0))
+  par(oma=c(0,0,0,0))
+  par(mgp=c(1,0.4,0))
+  ppcomp(fpnt, lwd=0.5, cex=0.5, cex.main=0.6, cex.axis=0.5, cex.lab=0.5, tck=-0.02, addlegend = FALSE)
+
+}
+
+z.plot1<-function(){plotpdf()}
+z.plot2<-function(){plotpdfqqplot()}
+z.plot3<-function(){plotcdf()}
+z.plot4<-function(){plotppplot()}
+
+plot_grid(z.plot1, z.plot2, z.plot3, z.plot4, ncol=2, labels=c("A", "B", "C", "D"), label_size = 7, label_colour = "red")
+
+par(opar)
+
+```
+
+
+### Hazard Curve and Return Levels RL
+
+Hazard curve is the solution to Equation \@ref(eq:pprl), but eliminating from it elements related to thunderstorms the equation is simplified to $A_{nt}\int_{Y_N}^{\infty}\lambda_{nt}\left( y\right)\,dy = \frac{1}{N}$, where $A_{nt}$ is the average time of non-thunderstorm events by year, and $Y_N$ is the return level or extreme wind velocity, corresponding to the N-years return period or MRI. Replacing in this equation the intensity function $lambda_{nt}$, and solving $Y_N$ for all possible values of MRI, will provide hazard curve displayed in Figure \@ref(fig:page10).
+
+
+```{r page10, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Hazard Curve. Station 801120" , fig.align="center", fig.height=2.5, fig.width=3.5}
+#
+#Hazard Curve. Station 801120
+#
+x= 1/paP 
+y= yvels
+df = data.frame(x = x, y = y)
+
+x1= tipicalReturnPeriods
+y1= veocitiesfortypicalreturnperiodsP
+
+df2 = data.frame(x = x1, y = y1)
+
+df2_more1700 <- df2 %>% filter(x >= c(1700))
+df2_less1700 <- df2 %>% filter(x < c(1700))
+
+ggplot(data=df, aes(x=x, y=y, group=1)) +
+  geom_line(color="red")+
+  geom_point(data=df2, aes(x=x, y=y, group=1), shape = 18, color = "black", fill="lightgray") +
+  xlim(0,8500) + 
+  ylim(125, 300) +
+  geom_text_repel(data=df2_more1700, size=2, aes(x=x, y=y, label = paste0("(",x,",",round(y, digits=1),")")),  direction="y", segment.size=0.1, 
+   nudge_y=15) + 
+  geom_text_repel(data=df2_less1700, size=2, aes(x=x, y=y, label = paste0("(",x,",",round(y, digits=1),")")),  direction="x", segment.size=0.1, 
+   nudge_x=1) +
+  xlab("Return Periods (Years) - POT-PP Intensity Function") + 
+  ylab("Velocities Km/h") + 
+  ggtitle(paste("Declustered - Non-Thunderstorms - Hazard Curve", "\n", "Location=", round(z6,2),  "Scale=", round(z7,2))) + 
+  theme(plot.title = element_text(size=8)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(axis.title =element_text(size=7))
+```
+
+
+```{r rl, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+mdf = data.frame(MRI=tipicalReturnPeriods, RL=veocitiesfortypicalreturnperiodsP)
+
+kable(mdf, align=c('c', 'c'),  digits = c(1, 2),
+      col.names = c("MRI (years)", "Return Level (km/h)"),
+      caption = "Return Levels -RL for Typical Mean Return Intervals - MRI. ISD station 801120",
+      caption.short = "Return Levels for ISD Station 801120",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "0.6in") %>%
+      column_spec(2,width = "1in") %>%
+      #column_spec(3,width = "1.8in") %>%
+kable_styling(font_size = 10, latex_options="scale_down")
+
+```
+
+Return levels of interest for this research, correspond to 700, 1700 and 3000 years of MRI, however, due to the mechanism of _[Integration with Existing Hurricane Studies](#integration)_, described in _[Methodology](#rmd-method)_, it is necessary to extract for all stations values related to typical return periods, as shown in the Table \@ref(tab:rl).
+
+### Comparison with POT-Poisson-GPD and Common Extreme Value Distributions
+
+To enable a comparison between (a) POT-PP (previous section), (b) _[POT-Poisson-GPD](#pot-poisson-gpd)_, and (c) the fitting process of common extreme value distributions (GPA, GEV, GUM) without using POT method, i.e., using the generic concept of _[Hazard Function HF](#hf)_ (see _[Theoretical Framework](#rmd-thefra)_), a whole automation process was done to calculate return levels and errors using mentioned alternatives, bearing in mind that in all cases _maximum likelihood_ was used to calculate the parameters.
+
+To this day (Feb 2020), there is no R package available that implements POT-PP, in contrast, there are many packages that implement POT-Poisson-GPD, this reflects that globally, extreme value analyzes are mainly done with the latter. The following SIX R packages were used: (a) `extRemes` [@Gilleland2019], (b) `ismev` [@JanetE.HeffernanwithRport2018], (c) `evd` [@Stephenson2002], (d) `Renext` [@Deville2016], (e) `evir` [@Pfaff2018], and (f) `fExtremes` [@Wuertz2017]. 
+
+Resulting return levels and errors using mentioned packages are reported in Table \@ref(tab:comparisonGPD). Similarly, return levels calculated from the adjustment of the probability distributions GPA, GEV, and Gumbel are shown it Table \@ref(tab:comparisonCommonEVD).
+
+```{r comparisonGPD, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+#years_declu_nt
+#years_all
+
+mydf_b = cbind(dlf$returnlev[c(28:33,35), ], RMSE=d$quant[c(28:33,35), 12])
+rownames(mydf_b) = c("extRemes", "ismev", "evd", "Renext Renouv", "evir", "fExtremes", "Renext 2 parameters")
+
+#years1$Year = labelyears
+kable(mydf_b, align=rep('l', 12),  digits = c(rep(1, 11),3), 
+      col.names = c("10", "20", "50", "100", "250","500", "700", "1000", "1700", "3000", "7000", "RMSE"),
+      caption = "POT-Poisson-GPD. Return Levels in km/h",
+      caption.short = "POT-Poisson-GPD. Return Levels in km/h",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "1.2in") %>%
+      column_spec(2,width = "0.2in") %>%
+      column_spec(3,width = "0.2in") %>%
+      column_spec(4,width = "0.2in") %>%
+      column_spec(5,width = "0.2in") %>%
+      column_spec(6,width = "0.2in") %>%
+      column_spec(7,width = "0.2in") %>%
+      column_spec(8,width = "0.2in") %>%
+      column_spec(9,width = "0.2in") %>%
+      column_spec(10,width = "0.2in") %>%
+      column_spec(11,width = "0.2in") %>%
+      column_spec(12,width = "0.2in") %>%
+      column_spec(13,width = "0.2in") %>%
+      kable_styling(font_size = 8, latex_options="scale_down") %>%
+      add_header_above(c("PACKAGE" = 1, "RETURN LEVELS FOR TYPICAL MRIs" = 11, "ERROR" = 1))
+```
+
+
+```{r comparisonCommonEVD, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results="asis"}
+#years_declu_nt
+#years_all
+
+
+mydf_c = cbind(dlf$returnlev[c(3,10,12), ], RMSE=d$quant[c(3,10,12), 12])
+evd_name = c("Generalized Pareto", "Generalized Extreme Value", "Gumbel")
+mydf_c = cbind(evd_name, mydf_c)
+#years1$Year = labelyears
+kable(mydf_c, align=rep('l', 13),  digits = c(0, rep(1, 11),3), 
+      col.names = c("NAME", "10", "20", "50", "100", "250","500", "700", "1000", "1700", "3000", "7000", "RMSE"),
+      caption = "Common Extreme Value Distributions. Return Levels in km/h",
+      caption.short = "Common Extreme Value Distributions. Return Levels in km/h",
+      longtable = TRUE,
+      booktabs = TRUE) %>%
+      row_spec(0, align = "l") %>%
+      column_spec(1,width = "0.1in") %>%
+      column_spec(2,width = "1.4in") %>%
+      column_spec(3,width = "0.15in") %>%
+      column_spec(4,width = "0.15in") %>%
+      column_spec(5,width = "0.15in") %>%
+      column_spec(6,width = "0.15in") %>%
+      column_spec(7,width = "0.15in") %>%
+      column_spec(8,width = "0.15in") %>%
+      column_spec(9,width = "0.15in") %>%
+      column_spec(10,width = "0.15in") %>%
+      column_spec(11,width = "0.15in") %>%
+      column_spec(12,width = "0.15in") %>%
+      column_spec(13,width = "0.15in") %>%
+      column_spec(14,width = "0.15in") %>%
+      kable_styling(font_size = 8, latex_options="scale_down") %>%
+      add_header_above(c("EVD" = 2, "RETURN LEVELS FOR TYPICAL MRIs" = 11, "ERROR" = 1))
+```
+
+## Wind Maps
+
+Maps in this section correspond to: (a) existing hurricane maps from previous studies, (b) non-hurricane wind maps created in this study with POT-PP (ERA5 and ISD), and (c) final maps (integrated results of hurricane and non-hurricane studies) for ERA5 and ISD.
+
+### Existing Hurricane Maps
+
+The Colombian consulting firm _Ingeniar Ltda_, following the methodology described in @hurricanemaps, and @hurricanemaps2, has provided raster wind maps for return periods 10, 20, 50, 100, 250, 500, 700, 1000, 1700, 3000, and 7000 years, resulting from the probabilistic study of winds due to hurricanes in the Colombian Caribbean Sea and the surrounding continental zone. Figure \@ref(fig:ingeniarmaps) shows three of mentioned maps.
+
+
+```{r ingeniarmaps, echo=FALSE, fig.cap="Ingeniar Hurricane Wind Maps", message=FALSE, warning=FALSE, fig.height=1.75, fig.width=6.5}
+#
+#Hurricane Wind Maps
+#
+file_rl_h_4326_700_st = "./data/hurricanemaps/h_700.tif"
+rl_h_4326_700_st = read_stars(file_rl_h_4326_700_st)
+rl_h_4326_700_st = setNames(rl_h_4326_700_st, "Kph")
+
+file_rl_h_4326_1700_st = "./data/hurricanemaps/h_1700.tif"
+rl_h_4326_1700_st = read_stars(file_rl_h_4326_1700_st)
+rl_h_4326_1700_st = setNames(rl_h_4326_1700_st, "h_1700")
+ 
+file_rl_h_4326_3000_st = "./data/hurricanemaps/h_3000.tif"
+rl_h_4326_3000_st = read_stars(file_rl_h_4326_3000_st)
+rl_h_4326_3000_st = setNames(rl_h_4326_3000_st, "h_3000")
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(27, 438), breaks=c(27, 100, 200, 300, 400, 438))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+c700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_h_4326_700_st, aes(fill = Kph, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-69.4, y=8.5, label=name), color="darkblue", fontface="bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-79.1, y=9.2, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=5.5, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 13.4, label = "Caribbean Sea", fontface = "italic", color = "grey22", size = 1.8) + 
+  annotate(geom = "text", x = -79, y = 5.6, label = "Pacific Sea", fontface = "italic", color = "grey22", size = 1.8) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1) +
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-80.5, -67.7), ylim = c(4.5, 13.9), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane Wind Map. \nMRI-700 years - Ingeniar Ltda") + 
+  theme(plot.title = element_text(size=6)) +
+  theme(axis.text.x= element_text(size=5)) + 
+  theme(axis.text.y= element_text(size=5)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10))) +
+  theme(legend.title = element_text(size = 6)) +
+  theme(legend.text = element_text(size = 5)) + 
+  theme(legend.background = element_blank()) +
+  theme(legend.key.width = unit(0.1, "cm")) +
+  theme(legend.key.height = unit(0.5, "cm"))
+
+legend <- get_legend(c700)
+
+c700 = c700 + theme(legend.position = "none")
+c1700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_h_4326_1700_st, aes(fill = h_1700, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-69.4, y=8.5, label=name), color="darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-79.1, y=9.2, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=5.5, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 13.4, label = "Caribbean Sea", fontface = "italic", color = "grey22", size = 1.8) + 
+  annotate(geom = "text", x = -79, y = 5.6, label = "Pacific Sea", fontface = "italic", color = "grey22", size = 1.8) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-80.5, -67.7), ylim = c(4.5, 13.9), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane Wind Map. \nMRI-1700 years - Ingeniar Ltda") + 
+  theme(plot.title = element_text(size=6)) +
+  theme(axis.text.x= element_text(size=5)) + 
+  theme(axis.text.y= element_text(size=5)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10))) +
+  theme(legend.position = "none")
+
+c3000 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_h_4326_3000_st, aes(fill = h_3000, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-69.4, y=8.5, label=name), color="darkblue", fontface="bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-79.1, y=9.2, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=5.5, label=name), color = "darkblue", fontface = "bold", size=1.5, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 13.4, label = "Caribbean Sea", fontface = "italic", color = "grey22", size = 1.8) + 
+  annotate(geom = "text", x = -79, y = 5.6, label = "Pacific Sea", fontface = "italic", color = "grey22", size = 1.8) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1) +
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-80.5, -67.7), ylim = c(4.5, 13.9), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane Wind Map. \nMRI-3000 years - Ingeniar Ltda") + 
+  theme(plot.title = element_text(size=6)) +
+  theme(axis.text.x= element_text(size=5)) + 
+  theme(axis.text.y= element_text(size=5)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -10))) +
+  theme(legend.position = "none")
+plot_grid(c700, c1700, c3000, legend, ncol=4, rel_widths=c(1, 1, 1, 0.13))
+```
+
+
+### Non-Hurricane Maps
+
+Using POT-PP to calculate RL in ISD stations, continuous maps covering the study area were created using _[Spatial Interpolation Techniques](#si)_ as described in _[Methodology](#rmd-method)_.
+
+
+```{r isdnhmaps, echo=FALSE, fig.cap="ISD Non-Hurricane Wind Maps", message=FALSE, warning=FALSE, fig.height=2.8, fig.width=6.5}
+#
+#ISD Non-Hurricane Wind Maps
+#
+file_rl_nh_4326_700_st = "./data/isdmaps/nh_700.tif"
+rl_nh_4326_700_st = read_stars(file_rl_nh_4326_700_st)
+rl_nh_4326_700_st = setNames(rl_nh_4326_700_st, "Kph")
+
+file_rl_nh_4326_1700_st = "./data/isdmaps/nh_1700.tif"
+rl_nh_4326_1700_st = read_stars(file_rl_nh_4326_1700_st)
+rl_nh_4326_1700_st = setNames(rl_nh_4326_1700_st, "nh_1700")
+ 
+file_rl_nh_4326_3000_st = "./data/isdmaps/nh_3000.tif"
+rl_nh_4326_3000_st = read_stars(file_rl_nh_4326_3000_st)
+rl_nh_4326_3000_st = setNames(rl_nh_4326_3000_st, "nh_3000")
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(188, 346),
+                           breaks=c(188, 200, 225, 250, 275, 300, 325, 346))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+c700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nh_4326_700_st, aes(fill = Kph, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-700 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.title = element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) + 
+  theme(legend.background = element_blank()) +
+  theme(legend.key.width = unit(0.1, "cm"))
+
+legend <- get_legend(c700)
+
+c700 = c700 + theme(legend.position = "none")
+
+c1700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nh_4326_1700_st, aes(fill = nh_1700, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"),
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-1700 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+c3000 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nh_4326_3000_st, aes(fill = nh_3000, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1) +
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-3000 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+plot_grid(c700, c1700, c3000, legend, ncol=4, rel_widths=c(1, 1, 1, 0.1))
+```
+
+The comparison process between measured data and ERA5 data did not give good results, but this is mainly due to inadequate data received from IDEAM. It was decided to execute the process POT-PP in the ERA5 variable _ten meters wind gust fg10_, but remembering that once adequate field data is obtained, the downscaling support must be verified to guarantee the feasibility of the results. No interpolation process was required because the calculated RLs at each station, represent predefined square cells of $0.25^\circ$ decimal degrees.
+
+
+```{r era5nhmaps, echo=FALSE, fig.cap="ERA5 Non-Hurricane Wind Maps", message=FALSE, warning=FALSE, fig.height=2.7, fig.width=6.5}
+#
+#ERA5 Non-Hurricane Wind Maps
+#
+file_rl_nonhurricanes_4326_700_st = "./data/era5maps/rl_nonhurricanes_4326_700_st.tif"
+rl_nonhurricanes_4326_700_st = read_stars(file_rl_nonhurricanes_4326_700_st)
+rl_nonhurricanes_4326_700_st = setNames(rl_nonhurricanes_4326_700_st, "Kph")
+
+file_rl_nonhurricanes_4326_1700_st = "./data/era5maps/rl_nonhurricanes_4326_1700_st.tif"
+rl_nonhurricanes_4326_1700_st = read_stars(file_rl_nonhurricanes_4326_1700_st)
+rl_nonhurricanes_4326_1700_st = setNames(rl_nonhurricanes_4326_1700_st, "nh_1700")
+
+file_rl_nonhurricanes_4326_3000_st = "./data/era5maps/rl_nonhurricanes_4326_3000_st.tif"
+rl_nonhurricanes_4326_3000_st = read_stars(file_rl_nonhurricanes_4326_3000_st)
+rl_nonhurricanes_4326_3000_st = setNames(rl_nonhurricanes_4326_3000_st, "nh_3000")
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(36, 129), breaks=c(36, 50, 75, 100, 120, 129))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+c700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nonhurricanes_4326_700_st, aes(fill = Kph, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-700 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.title = element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) + 
+  theme(legend.background = element_blank()) +
+  theme(legend.key.width = unit(0.1, "cm"))
+
+legend <- get_legend(c700)
+
+c700 = c700 + theme(legend.position = "none")
+
+c1700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nonhurricanes_4326_1700_st, aes(fill = nh_1700, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-1700 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+c3000 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_nonhurricanes_4326_3000_st, aes(fill = nh_3000, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Non-Hurricane Wind Map. \nMRI-3000 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+plot_grid(c700, c1700, c3000, legend, ncol=4, rel_widths=c(1, 1, 1, 0.1))
+```
+
+### Combined Maps {#cm}
+
+Following the procedure described in _[Integration with Hurricane Data](#integration)_, final wind maps were created, combining existing data for hurricane studies, and non-hurricane maps produced in this study.
+
+```{r isdcbmaps, echo=FALSE, fig.cap="ISD Hurricane & Non-Hurricane Wind Maps", message=FALSE, warning=FALSE, fig.height=2.8, fig.width=6.5}
+#
+#ISD Hurricane & Non-Hurricane Wind Maps
+#
+file_rl_combined_4326_700_st = "./data/isdmaps/isd_combined_4326_700_st.tif"
+rl_combined_4326_700_st = read_stars(file_rl_combined_4326_700_st)
+rl_combined_4326_700_st = setNames(rl_combined_4326_700_st, "Kph")
+
+file_rl_combined_4326_1700_st = "./data/isdmaps/isd_combined_4326_1700_st.tif"
+rl_combined_4326_1700_st = read_stars(file_rl_combined_4326_1700_st)
+rl_combined_4326_1700_st = setNames(rl_combined_4326_1700_st, "c_1700")
+
+file_rl_combined_4326_3000_st = "./data/isdmaps/isd_combined_4326_3000_st.tif"
+rl_combined_4326_3000_st = read_stars(file_rl_combined_4326_3000_st)
+rl_combined_4326_3000_st = setNames(rl_combined_4326_3000_st, "c_3000")
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(188, 438), breaks=c(188, 200, 250, 300, 350, 400, 438))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+c700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_700_st, aes(fill = Kph, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-700 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.title = element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) + 
+  theme(legend.background = element_blank()) +
+  theme(legend.key.width = unit(0.1, "cm"))
+
+legend <- get_legend(c700)
+
+c700 = c700 + theme(legend.position = "none")
+
+c1700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_1700_st, aes(fill = c_1700, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-1700 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+c3000 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_3000_st, aes(fill = c_3000, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-3000 years - ISD") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+plot_grid(c700, c1700, c3000, legend, ncol=4, rel_widths=c(1, 1, 1, 0.1))
+```
+
+
+```{r era5cbmaps, echo=FALSE, fig.cap="ERA5 Hurricane & Non-Hurricane Wind Maps", message=FALSE, warning=FALSE, fig.height=2.8, fig.width=6.5}
+#
+#ERA5 Hurricane & Non-Hurricane Wind Maps
+#
+file_rl_combined_4326_700_st = "./data/era5maps/rl_combined_4326_700_st.tif"
+rl_combined_4326_700_st = read_stars(file_rl_combined_4326_700_st)
+rl_combined_4326_700_st = setNames(rl_combined_4326_700_st, "Kph")
+
+file_rl_combined_4326_1700_st = "./data/era5maps/rl_combined_4326_1700_st.tif"
+rl_combined_4326_1700_st = read_stars(file_rl_combined_4326_1700_st)
+rl_combined_4326_1700_st = setNames(rl_combined_4326_1700_st, "c_1700")
+
+file_rl_combined_4326_3000_st = "./data/era5maps/rl_combined_4326_3000_st.tif"
+rl_combined_4326_3000_st = read_stars(file_rl_combined_4326_3000_st)
+rl_combined_4326_3000_st = setNames(rl_combined_4326_3000_st, "c_3000")
+
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100), limits=c(37, 438), breaks=c(37, 100, 200, 300, 400, 438))
+
+theme_set(theme_bw())
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+colombia = world_points$name == "Colombia"
+panama = world_points$name == "Panama"
+peru= world_points$name == "Peru"
+brazil= world_points$name == "Brazil"
+venezuela= world_points$name == "Venezuela"
+ecuador= world_points$name == "Ecuador"
+
+c700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_700_st, aes(fill = Kph, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-700 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.title = element_text(size = 6)) +
+  theme(legend.text = element_text(size = 6)) + 
+  theme(legend.background = element_blank()) +
+  theme(legend.key.width = unit(0.1, "cm"))
+
+legend <- get_legend(c700)
+
+c700 = c700 + theme(legend.position = "none")
+
+c1700 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_1700_st, aes(fill = c_1700, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-1700 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+c3000 = ggplot(data = world) + 
+  geom_sf(fill= "antiquewhite", size=0.1) + 
+  geom_stars(data = rl_combined_4326_3000_st, aes(fill = c_3000, x = x, y = y)) + 
+  sc+
+  geom_text(data= world_points[venezuela,],aes(x=-66.5, y=8.5, label=name), color="darkblue", fontface="bold", size=2, check_overlap=FALSE) +
+  geom_text(data= world_points[panama,],aes(x=-80.3, y=9.2, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) + 
+  geom_text(data= world_points[ecuador,],aes(x=-78.8, y=-1, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[peru,],aes(x=-75, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[brazil,],aes(x=-68, y=-6, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  geom_text(data= world_points[colombia,],aes(x=-71, y=4, label=name), color = "darkblue", fontface = "bold", size=2, check_overlap = FALSE) +
+  annotate(geom = "text", x = -77.5, y = 14, label = "Caribbean\nSea", fontface = "italic", color = "grey22", size = 2) + 
+  annotate(geom = "text", x = -80.5, y = 5, label = "Pacific\nSea", fontface = "italic", color = "grey22", size = 2) +
+  geom_sf(data = st_cast(world, "MULTILINESTRING"), size=0.1)+
+  annotation_scale(location = "bl", width_hint = 0.5, height = unit(0.1, "cm"), line_width = 0.1, text_cex = 0.5, pad_x = unit(0.03, "in"), 
+   pad_y = unit(0.03, "in")) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.01, "in"), pad_y = unit(0.02, "in"), height = unit(0.5, "cm"), 
+   width = unit(0.5, "cm"), style = north_arrow_minimal) +
+  coord_sf(xlim = c(-82.1, -63.8), ylim = c(-7.5, 15.5), expand = FALSE) +
+  xlab("") + 
+  ylab("") + 
+  ggtitle("Hurricane & Non-Hurricane Wind Map. \nMRI-3000 years - ERA5") + 
+  theme(plot.title = element_text(size=7)) +
+  theme(axis.text.x= element_text(size=6)) + 
+  theme(axis.text.y= element_text(size=6)) +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.1)) +
+  theme(panel.background = element_rect(fill = "aliceblue")) +
+  theme(plot.margin=unit(c(0,0,0,0),"cm")) +
+  theme(plot.background = element_rect(fill = "transparent", color = NA))+
+  theme(axis.text.x = element_text(margin =  margin(t =2, b = -14))) + 
+  theme(axis.text.y = element_text(margin =  margin(r =2, l = -16))) +
+  theme(legend.position = "none")
+
+plot_grid(c700, c1700, c3000, legend, ncol=4, rel_widths=c(1, 1, 1, 0.1))
+```
+
+## Final Discussion and Future Work {#fd}
+
+The main difference between POT-PP and POT-Poisson-GPD is that in the latter, wind quantities are adjusted to a GPD, and the time is adjusted to a Poisson Process (1D), while in the former, time and magnitude are adjusted to a Poisson Process (2D). If there is no weather classification available (storm and no storm) in the wind time series, POT-PP loses its advantages and resembles in potential and scope to POT-Poisson-GPD, because the intensity function varying only in magnitude, becomes similar to a GPD. For this reason, POT-PP method is really useful, if historical classification of time series is available, record by record, in storm and non-storm.
+
+Regarding the comparison of the data, it must be remembered that the basis of comparison, that is, the one that represents the truth in the field - IDEAM field measurements, was not fully available, what disturbed the process since before starting it. On the other hand, there are many uncertainties with respect to the model that represents the ISD database, because first, the available documentation does not specify whether it is an average or a gust data, second, the comparative graphs showed that ISD database did not represent a continuous variable (vertical or horizontal stripes in scatter plots), and finally, the comparisons against IDEAM never showed good results. 
+
+With respect to ERA5 database, although the comparative results showed greater similarity, it should be remembered that each record in the time series does not represent a point value, on the contrary, it represents a square cell of 0.25 decimal degrees. The IDEAM stations with which the comparison was made, can fall into any location of the cell, and constitute only a very local condition, that is not represented by an average forecast for the whole cell size. This considers that Colombia is a tropical region with a widely diverse territory (mountains, plains, rivers, forests, etc.) and climate. So the possible similarity between IDEAM and ERA5 is limited by this condition.
+
+This classification by time of historical series, is useful because it allows to define more precisely the average rate of events per year (Poisson process rate), which in POT-PP is represented by the average amount of events time per year, this is, components $A_t$ and $A_{nt}$ of Equation \@ref(eq:pprl) $A_t\int_{Y_N}^{\infty}\lambda_t\left( y\right)\,dy + A_{nt}\int_{Y_N}^{\infty}\lambda_{nt}\left( y\right)\,dy = \frac{1}{N}$, used to calculate return levels $Y_N$. 
+
+By the lack of thunderstorm and non-thunderstorm information, it is impossible to calculate which part of the annual time belongs to storm and which to non-storm. As the available data were all assumed as non-thunderstorm data, this average time of events per year will always result in a fixed wrong value of 365 days, the maximum possible value. For ISD, this condition is reflected in high and unlikely final results. However, this condition did not affect the results in the ERA5 database in the same way. Although also in ERA5, all the data were classified as “non-thunderstorm”, and the average time of events was always 365 days, an additional condition made the final result more realistic. Contrary to what happens in the ISD database, where time series have many gaps and there is lack of information, used ERA5 database has the full time series, hour by hour, from 1979 to 2019. Following the theory behind POT-PP, this implies that there is only one cluster for the whole time series, which would leave a single data after the de-clustering, canceling the entire subsequent process. Our proposed solution was to work only with one data per week, the maximum, which implies that the de-clustering process will have no effect, since it is based on 4-day gaps, resulting in more events above the threshold, exactly 48 events for each of the 40 years of history, which translates into greater averaging of the final wind data.
+
+One of the objectives of the investigation was to compare different methods in the calculation of return levels, and that was achieved using in all cases, both POT-Poisson-GPD, and POT-PP. The Poisson for POT-Poisson-GPD, does not accept data classification by time (storm or non-storm), because it is one-dimensional and data must represent a single general type of event: wind. Despite that, it is important to emphasize that the shortcomings in the calculation of the Poisson process rate, similarly affected the application of both methods, so in all cases, the results have the same limitation, and the use of POT-Poisson-GPD does not represent best quality in the results.
+
+In relation to the use of PostgreSQL to store time series, seeking to decrease RAM load to avoid memory overflow or slow processes, it can be concluded that although it is an efficient solution, it is also a delayed solution in terms of its implementation effort (process text files, load them, and unstack them in the database). In addition, replication of research for future work is more difficult by the need to install the database engine and restore the database backup, compared to the simple use of text files. It is recommended to use a database for analysis and processing with *R* and `tidyverse` lazy `tibble` data-frame technologies, when data sources are already stored in a database as PostgreSQL. 
+
+Final recommendation to optimize memory management when time series are processed are: (a) to work directly with text files, but make a good code design avoiding to load all time series into memory at the same time, i.e., serial processing file by file, (b) make sure to remove used objects from memory `rm("object")`, (c) make memory garbage collection `gc()` to frees up unwanted objects, or (d) reuse the same variables in each cycle of the process, to use always the same previously allocated memory spaces. Next chunk of code shows some important memory management options.
+
+
+```{r results='hide', vspaceecho='0.4cm', echo = TRUE, eval=FALSE, size="scriptsize"}
+    #List objects in current environment
+      ls()
+    #Remove all objects in current environment
+      rm(list=ls())
+    #After removing object, apply garbage collection
+      gc()
+    #List object sorted by size
+      sort(sapply(ls(),function(x){object.size(get(x))}))
+    #Remove an specific object
+      rm("name")
+    #Review some memory values
+      library(pryr)
+      mem_used()
+      memory.size()
+      memory.limit()
+    #Change memory limit
+      memory.limit(size = value)
+```
+
+For big NetCDF files, as in this study where variable _fg10_ (3-s wind gust) stored 3.381 (49 columns x 69 rows) cells and in each cell 356.472 hours, representing 1.205'231.832 different wind records in a file size of 3.53 GB, it is recommended to get specific needed slices instead of loading the entire file into memory. For instance, use parameters `start`, and `count` of function `ncvar_get` (R package `ncdf4`) to get desired NetCDF records, as shown in code below where time series of first ERA5 cell/station (upper-left) is assigned to variable _firstcelltimeseries_.
+ 
+```{r results='hide', vspaceecho='0.4cm', echo = TRUE, eval=FALSE, size="scriptsize"}
+    library(ncdf4)
+    ncname <- "outfile_nc4c_zip9.nc"
+    ncin <- nc_open(filename)
+    #First column
+      firstcol=1
+    #First row
+      firstrow=1
+    #First time
+      firsttime = 1
+    #Number of cols to get
+      ncols=1
+    #Number of rows to get
+      nrows=1
+    #Total number of time records (time dimension)
+      timedim <-  dim(ncvar_get(ncin, "time"))
+    #Number of time records to get
+      ntime = timedim
+      firstcelltimeseries = ncvar_get(nc=ncin, varid='fg10', 
+                            start=c(firstcol,firstrow,firsttime),
+                            count=c(ncols,nrows,ntime))
+```
+
+
+To improve the quality of extreme wind analysis in future research, the inclusion of seasonal effects is recommended. This can be done in two ways, first, using a separate POT-PP for each season, and second, model the Poisson process parameters (location, scale and shape) as sinusoidal functions of time. Finally, it is possible to include more formal statistics (not only graphics) using reliable and complete measured data to face the downscaling challenge.
+

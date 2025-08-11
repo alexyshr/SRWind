@@ -1,0 +1,35 @@
+375
+378
+413
+427
+460
+841
+842
+878
+888
+972
+1018
+1056
+
+
+Error R Studio (pot_pp_ERA5_isla.r)
+
+- Station 427, 888, 972
+
+Error in get(paste("ci.", newcl, sep = ""))(x = x, alpha = alpha, type = type, : 
+ci: Sorry, unable to calculate the parameter covariance matrix. Maybe try a different method.
+
+pointing to: line 143 of function_lib.R
+    ## maximum-likelihood fitting of the GEV distribution
+    fit_mle <- extRemes::fevd(ams, method="MLE", type="GEV")
+    print(plot(fit_mle))
+
+- station 460, 841, 842, 878, 1018, 1056
+
+Error in plot.window(...) : need finite 'ylim' values
+
+pointing to: line 143 of function_lib.R
+    ## maximum-likelihood fitting of the GEV distribution
+    fit_mle <- extRemes::fevd(ams, method="MLE", type="GEV")
+    print(plot(fit_mle))
+
